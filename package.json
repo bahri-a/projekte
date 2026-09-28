@@ -7,9 +7,8 @@
     "dev": "concurrently -k -n server,web -c gray,blue \"npm:dev:server\" \"npm:dev:web\"",
     "dev:server": "PORT=3280 tsx watch server/index.ts",
     "dev:web": "API_PORT=3280 vite --port 5280 --strictPort",
-    "dev:test": "npm run testdata:ensure && concurrently -k -n server,web -c gray,blue \"DATA_FILE=data/items.test.json PORT=3281 tsx watch server/index.ts\" \"API_PORT=3281 vite --port 5281 --strictPort\"",
+    "dev:test": "concurrently -k -n server,web -c gray,blue \"DATA_FILE=data/items.test.json PORT=3281 tsx watch server/index.ts\" \"API_PORT=3281 vite --port 5281 --strictPort\"",
     "testdata:reset": "tsx scripts/reset-testdata.ts",
-    "testdata:ensure": "tsx scripts/reset-testdata.ts --if-missing",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b"
   },

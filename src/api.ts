@@ -15,3 +15,15 @@ async function anfrage<T>(pfad: string, init?: RequestInit): Promise<T> {
 export function ladeEintraege(): Promise<Eintrag[]> {
   return anfrage<Eintrag[]>('/api/items');
 }
+
+export interface NeueFelder {
+  titel: string;
+  info: string;
+  datum: string | null;
+  uhrzeit: string | null;
+  wichtig: boolean;
+}
+
+export function legeAn(felder: NeueFelder): Promise<Eintrag> {
+  return anfrage<Eintrag>('/api/items', { method: 'POST', body: JSON.stringify(felder) });
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ladeEintraege } from './api';
+import { ladeEintraege, legeAn, type NeueFelder } from './api';
+import Eingabe from './Eingabe';
 import Herkunft from './Herkunft';
 import type { Eintrag } from './typen';
 import { datumsText, gruppiere, stichtage, type Stichtage } from './zeit';
@@ -31,10 +32,35 @@ export default function App() {
       .catch(() => setFehler('Die Einträge konnten nicht geladen werden.'));
   }, []);
 
+  // Der Eintrag erscheint sofort und wird nach der Antwort des Servers ersetzt.
+  async function hinzufuegen(felder: NeueFelder): Promise<boolean> {
+    const vorlaeufig: Eintrag = {
+      id: `neu-${crypto.randomUUID()}`,
+      ...felder,
+      erledigt: false,
+      erstelltAm: new Date().toISOString(),
+      erledigtAm: null,
+      quelle: 'manuell',
+      quellId: null,
+    };
+    setEintraege((alt) => [...(alt ?? []), vorlaeufig]);
+    try {
+      const gespeichert = await legeAn(felder);
+      setEintraege((alt) => (alt ?? []).map((e) => (e.id === vorlaeufig.id ? gespeichert : e)));
+      setFehler(null);
+      return true;
+    } catch {
+      setEintraege((alt) => (alt ?? []).filter((e) => e.id !== vorlaeufig.id));
+      setFehler('Der Eintrag konnte nicht gespeichert werden.');
+      return false;
+    }
+  }
+
   const gruppen = eintraege ? gruppiere(eintraege, t) : [];
 
   return (
     <main className="seite">
+      <Eingabe onHinzufuegen={hinzufuegen} />
       {fehler && <p className="hinweis">{fehler}</p>}
       {eintraege && gruppen.length === 0 && <p className="hinweis">Nichts geplant.</p>}
       {gruppen.map((g) => (

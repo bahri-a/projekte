@@ -3,6 +3,8 @@
   --text: #1f1f1e;
   --text-leise: #8a8a86;
   --linie: #ecebe8;
+  --feld: #ffffff;
+  --feld-rand: #e3e2de;
   --akzent: #b07a45;
   --akzent-gedaempft: #a4754a;
 
@@ -114,4 +116,141 @@ body {
   margin: 48px 0;
   color: var(--text-leise);
   text-align: center;
+}
+
+/* Schnelles Hinzufügen */
+.eingabe {
+  margin-bottom: 40px;
+}
+
+.eingabe-zeile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--feld-rand);
+}
+
+.eingabe-zeile:focus-within {
+  border-bottom-color: var(--text-leise);
+}
+
+.eingabe-titel {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+
+.eingabe-titel::placeholder,
+.feld::placeholder {
+  color: var(--text-leise);
+}
+
+.mehr {
+  flex: none;
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--text-leise);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mehr:hover,
+.mehr:focus-visible {
+  color: var(--text);
+}
+
+.zusatzfelder {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.feld-reihe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 16px;
+}
+
+.feld {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--feld-rand);
+  border-radius: 6px;
+  background: var(--feld);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.feld:focus {
+  outline: none;
+  border-color: var(--text-leise);
+}
+
+.feld:disabled {
+  opacity: 0.45;
+}
+
+.feld-info {
+  width: 100%;
+}
+
+.feld-beschriftung {
+  display: grid;
+  gap: 3px;
+  font-size: 14px;
+  color: var(--text-leise);
+}
+
+.wichtig-schalter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 7px;
+  font-size: 14px;
+  color: var(--text-leise);
+  cursor: pointer;
+}
+
+.wichtig-schalter input {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border: 1.5px solid var(--text-leise);
+  border-radius: 4px;
+  background: var(--feld);
+  cursor: pointer;
+}
+
+.wichtig-schalter input::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--akzent);
+  transform: scale(0);
+}
+
+.wichtig-schalter input:checked {
+  border-color: var(--akzent);
+}
+
+.wichtig-schalter input:checked::after {
+  transform: scale(1);
+}
+
+.wichtig-schalter input:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: 2px;
 }

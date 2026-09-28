@@ -1,0 +1,58 @@
+:root {
+  --hintergrund: #fbfbfa;
+  --text: #1f1f1e;
+  --text-leise: #8a8a86;
+  --linie: #ecebe8;
+  --akzent: #4f6fae;
+
+  --schrift: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--hintergrund);
+  color: var(--text);
+  font-family: var(--schrift);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.seite {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 56px 20px 96px;
+}
+
+.gruppe + .gruppe {
+  margin-top: 36px;
+}
+
+.gruppe-titel {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-leise);
+}
+
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eintrag {
+  padding: 7px 0;
+}
+
+.hinweis {
+  margin: 48px 0;
+  color: var(--text-leise);
+  text-align: center;
+}

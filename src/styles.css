@@ -3,7 +3,11 @@
   --text: #1f1f1e;
   --text-leise: #8a8a86;
   --linie: #ecebe8;
+  --kreis: #c9c8c3;
   --feld: #ffffff;
+  --hinweis-hintergrund: #2b2b29;
+  --hinweis-text: #f4f3f0;
+  --hinweis-aktion: #e2b784;
   --feld-rand: #e3e2de;
   --akzent: #b07a45;
   --akzent-gedaempft: #a4754a;
@@ -53,10 +57,53 @@ body {
 .eintrag {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   column-gap: 16px;
-  align-items: baseline;
+  align-items: start;
   padding: 7px 0;
+}
+
+.eintrag.geht {
+  overflow: hidden;
+}
+
+/* Rundes Abhak-Feld: Klickfläche 32 × 32 px, sichtbar ein Kreis von 18 px. */
+.abhaken {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -4.5px -7px -4.5px -7px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kreis {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--kreis);
+  border-radius: 50%;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.abhaken:hover .kreis,
+.abhaken:focus-visible .kreis {
+  border-color: var(--text-leise);
+}
+
+.abhaken:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: -3px;
+}
+
+.abhaken[aria-checked='true'] .kreis {
+  border-color: var(--text-leise);
+  background: var(--text-leise);
+  box-shadow: inset 0 0 0 3px var(--hintergrund);
 }
 
 .inhalt {
@@ -76,6 +123,7 @@ body {
 
 .datum {
   font-size: 14px;
+  line-height: 23px;
   color: var(--text-leise);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -90,6 +138,7 @@ body {
   position: absolute;
   left: -14px;
   top: 16px;
+  z-index: 1;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -112,7 +161,7 @@ body {
   stroke-linejoin: round;
 }
 
-.hinweis {
+.meldung {
   margin: 48px 0;
   color: var(--text-leise);
   text-align: center;
@@ -253,4 +302,66 @@ body {
 .wichtig-schalter input:focus-visible {
   outline: 2px solid var(--akzent);
   outline-offset: 2px;
+}
+
+/* Hinweis unten, z. B. „Erledigt · Rückgängig“ */
+.hinweis-bereich {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+.hinweis-box {
+  display: inline-block;
+  max-width: 100%;
+  padding: 8px 8px 8px 16px;
+  border-radius: 10px;
+  background: var(--hinweis-hintergrund);
+  color: var(--hinweis-text);
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  pointer-events: auto;
+  animation: hinweis-rein 180ms ease-out;
+}
+
+.hinweis-trenner {
+  margin: 0 2px;
+  opacity: 0.5;
+}
+
+.hinweis-aktion {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--hinweis-aktion);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hinweis-aktion:hover,
+.hinweis-aktion:focus-visible {
+  background: rgb(255 255 255 / 0.08);
+  outline: none;
+}
+
+@keyframes hinweis-rein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

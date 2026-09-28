@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import express, { type ErrorRequestHandler } from 'express';
 import { aendereDaten, leseDaten, stelleDateiSicher, type Eintrag } from './daten';
-import { pruefeNeuenEintrag } from './pruefung';
+import { pruefeAenderung, pruefeNeuenEintrag } from './pruefung';
 
 const port = Number(process.env.PORT ?? 3280);
 // Relativ zum Projektordner, unabhängig davon, von wo der Server gestartet wird.
@@ -40,6 +40,29 @@ app.post('/api/items', async (req, res) => {
     daten.items.push(eintrag);
   });
   res.status(201).json(eintrag);
+});
+
+app.patch('/api/items/:id', async (req, res) => {
+  const pruefung = pruefeAenderung(req.body);
+  if (!pruefung.ok) {
+    res.status(400).json({ fehler: pruefung.fehler });
+    return;
+  }
+  const { erledigt } = pruefung.aenderung;
+  const eintrag = await aendereDaten(dataPath, (daten) => {
+    const e = daten.items.find((x) => x.id === req.params.id);
+    if (!e) return null;
+    if (erledigt !== undefined && erledigt !== e.erledigt) {
+      e.erledigt = erledigt;
+      e.erledigtAm = erledigt ? new Date().toISOString() : null;
+    }
+    return e;
+  });
+  if (!eintrag) {
+    res.status(404).json({ fehler: 'Diesen Eintrag gibt es nicht.' });
+    return;
+  }
+  res.json(eintrag);
 });
 
 app.use('/api', (_req, res) => {

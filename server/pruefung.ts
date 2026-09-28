@@ -74,3 +74,21 @@ export function pruefeNeuenEintrag(body: unknown): Pruefergebnis {
     },
   };
 }
+
+export type Aenderung = { erledigt?: boolean };
+export type Aenderungsergebnis = { ok: true; aenderung: Aenderung } | { ok: false; fehler: string };
+
+export function pruefeAenderung(body: unknown): Aenderungsergebnis {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return { ok: false, fehler: 'Erwartet wird ein JSON-Objekt.' };
+  }
+  const b = body as Record<string, unknown>;
+  const aenderung: Aenderung = {};
+  if (b.erledigt !== undefined) {
+    if (typeof b.erledigt !== 'boolean') {
+      return { ok: false, fehler: '„erledigt“ muss true oder false sein.' };
+    }
+    aenderung.erledigt = b.erledigt;
+  }
+  return { ok: true, aenderung };
+}

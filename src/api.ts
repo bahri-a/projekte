@@ -27,3 +27,10 @@ export interface NeueFelder {
 export function legeAn(felder: NeueFelder): Promise<Eintrag> {
   return anfrage<Eintrag>('/api/items', { method: 'POST', body: JSON.stringify(felder) });
 }
+
+export function setzeErledigt(id: string, erledigt: boolean): Promise<Eintrag> {
+  return anfrage<Eintrag>(`/api/items/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ erledigt }),
+  });
+}

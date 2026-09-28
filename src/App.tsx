@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { ladeEintraege, legeAn, type NeueFelder } from './api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ladeEintraege, legeAn, setzeErledigt, type NeueFelder } from './api';
 import Eingabe from './Eingabe';
-import Herkunft from './Herkunft';
+import Hinweis, { type HinweisDaten } from './Hinweis';
 import type { Eintrag } from './typen';
-import { datumsText, gruppiere, stichtage, type Stichtage } from './zeit';
+import { gruppiere, stichtage, type Stichtage } from './zeit';
+import Zeile from './Zeile';
 
 // Liefert die Stichtage und aktualisiert sie, sobald ein neuer Tag beginnt,
 // damit die Gruppen auch bei offen gelassener Seite stimmen.
@@ -24,6 +25,11 @@ function useStichtage(): Stichtage {
 export default function App() {
   const [eintraege, setEintraege] = useState<Eintrag[] | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
+  const [hinweis, setHinweis] = useState<HinweisDaten | null>(null);
+  const hinweisNr = useRef(0);
+  // Laufende Nummer je Eintrag: Nur die Antwort auf die letzte Änderung wird
+  // übernommen, damit eine späte Antwort ein „Rückgängig“ nicht überschreibt.
+  const aenderungsNr = useRef(new Map<string, number>());
   const t = useStichtage();
 
   useEffect(() => {
@@ -31,6 +37,17 @@ export default function App() {
       .then(setEintraege)
       .catch(() => setFehler('Die Einträge konnten nicht geladen werden.'));
   }, []);
+
+  function ersetze(neu: Eintrag) {
+    setEintraege((alt) => (alt ?? []).map((e) => (e.id === neu.id ? neu : e)));
+  }
+
+  function zeigeHinweis(text: string, onRueckgaengig: () => void) {
+    hinweisNr.current += 1;
+    setHinweis({ nr: hinweisNr.current, text, onRueckgaengig });
+  }
+
+  const schliesseHinweis = useCallback(() => setHinweis(null), []);
 
   // Der Eintrag erscheint sofort und wird nach der Antwort des Servers ersetzt.
   async function hinzufuegen(felder: NeueFelder): Promise<boolean> {
@@ -56,38 +73,52 @@ export default function App() {
     }
   }
 
+  // Setzt „erledigt“ sofort in der Liste und speichert es; bei einem Fehler
+  // wird der alte Stand wiederhergestellt.
+  async function setzeStatus(eintrag: Eintrag, erledigt: boolean) {
+    const nr = (aenderungsNr.current.get(eintrag.id) ?? 0) + 1;
+    aenderungsNr.current.set(eintrag.id, nr);
+    const aktuell = () => aenderungsNr.current.get(eintrag.id) === nr;
+    ersetze({ ...eintrag, erledigt, erledigtAm: erledigt ? new Date().toISOString() : null });
+    try {
+      const gespeichert = await setzeErledigt(eintrag.id, erledigt);
+      if (aktuell()) ersetze(gespeichert);
+      setFehler(null);
+    } catch {
+      if (aktuell()) ersetze({ ...eintrag, erledigt: !erledigt, erledigtAm: erledigt ? null : eintrag.erledigtAm });
+      setFehler('Die Änderung konnte nicht gespeichert werden.');
+    }
+  }
+
+  function abhaken(eintrag: Eintrag) {
+    void setzeStatus(eintrag, true);
+    zeigeHinweis('Erledigt', () => void setzeStatus(eintrag, false));
+  }
+
   const gruppen = eintraege ? gruppiere(eintraege, t) : [];
 
   return (
     <main className="seite">
       <Eingabe onHinzufuegen={hinzufuegen} />
-      {fehler && <p className="hinweis">{fehler}</p>}
-      {eintraege && gruppen.length === 0 && <p className="hinweis">Nichts geplant.</p>}
+      {fehler && <p className="meldung">{fehler}</p>}
+      {eintraege && gruppen.length === 0 && <p className="meldung">Nichts geplant.</p>}
       {gruppen.map((g) => (
         <section key={g.id} className="gruppe" aria-labelledby={`gruppe-${g.id}`}>
           <h2 id={`gruppe-${g.id}`} className="gruppe-titel">{g.titel}</h2>
           <ul className="liste">
             {g.eintraege.map((e) => (
-              <li
+              <Zeile
                 key={e.id}
-                className={['eintrag', e.wichtig && 'wichtig', g.id === 'ueberfaellig' && 'ueberfaellig']
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                {e.wichtig && <span className="wichtig-punkt" title="Wichtig" aria-label="Wichtig" role="img" />}
-                <div className="inhalt">
-                  <div className="titel">
-                    {e.titel}
-                    <Herkunft quelle={e.quelle} />
-                  </div>
-                  {e.info && <div className="info">{e.info}</div>}
-                </div>
-                {e.datum && <div className="datum">{datumsText(e, t)}</div>}
-              </li>
+                eintrag={e}
+                stichtage={t}
+                ueberfaellig={g.id === 'ueberfaellig'}
+                onAbhaken={abhaken}
+              />
             ))}
           </ul>
         </section>
       ))}
+      <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />
     </main>
   );
 }

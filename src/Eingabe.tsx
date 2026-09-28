@@ -15,36 +15,51 @@ export default function Eingabe({ onHinzufuegen }: Props) {
   const [wichtig, setWichtig] = useState(false);
   const [offen, setOffen] = useState(false);
   const titelFeld = useRef<HTMLInputElement>(null);
-  // Sperre gegen doppeltes Absenden (z. B. zweimal schnell Enter).
-  const sendet = useRef(false);
+  // Aktueller Titel ohne Umweg über den Renderzyklus. Er wird beim Absenden
+  // sofort geleert, deshalb legt ein doppeltes Enter nichts zweimal an.
+  const aktuellerTitel = useRef('');
 
-  async function absenden() {
-    const text = titel.trim();
-    if (!text || sendet.current) return;
-    sendet.current = true;
-    const felder: NeueFelder = {
-      titel: text,
-      info: info.trim(),
-      datum: datum || null,
-      uhrzeit: datum && uhrzeit ? uhrzeit : null,
-      wichtig,
-    };
-    setTitel('');
+  function aendereTitel(wert: string) {
+    aktuellerTitel.current = wert;
+    setTitel(wert);
+  }
+
+  function leereZusatzfelder() {
     setInfo('');
     setDatum('');
     setUhrzeit('');
     setWichtig(false);
+  }
+
+  function umschalten() {
+    // Zugeklappt fließen keine unsichtbaren Werte in neue Einträge ein.
+    if (offen) leereZusatzfelder();
+    setOffen(!offen);
+  }
+
+  async function absenden() {
+    const text = aktuellerTitel.current.trim();
+    if (!text) return;
+    const felder: NeueFelder = {
+      titel: text,
+      info: offen ? info.trim() : '',
+      datum: offen && datum ? datum : null,
+      uhrzeit: offen && datum && uhrzeit ? uhrzeit : null,
+      wichtig: offen && wichtig,
+    };
+    aendereTitel('');
+    leereZusatzfelder();
     titelFeld.current?.focus();
     const ok = await onHinzufuegen(felder);
-    if (!ok) {
-      // Eingaben zurückgeben, damit nichts verloren geht.
-      setTitel(felder.titel);
+    // Eingaben zurückgeben, damit nichts verloren geht, sofern das Feld
+    // inzwischen nicht schon für den nächsten Eintrag benutzt wird.
+    if (!ok && aktuellerTitel.current === '') {
+      aendereTitel(felder.titel);
       setInfo(felder.info);
       setDatum(felder.datum ?? '');
       setUhrzeit(felder.uhrzeit ?? '');
       setWichtig(felder.wichtig);
     }
-    sendet.current = false;
   }
 
   // Enter in jedem Feld legt den Eintrag an. Ein Formular mit mehreren Feldern
@@ -71,7 +86,7 @@ export default function Eingabe({ onHinzufuegen }: Props) {
           className="eingabe-titel"
           type="text"
           value={titel}
-          onChange={(e) => setTitel(e.target.value)}
+          onChange={(e) => aendereTitel(e.target.value)}
           placeholder="Was steht an?"
           aria-label="Neuer Eintrag"
           autoFocus
@@ -82,7 +97,7 @@ export default function Eingabe({ onHinzufuegen }: Props) {
           className="mehr"
           aria-expanded={offen}
           aria-controls="zusatzfelder"
-          onClick={() => setOffen((o) => !o)}
+          onClick={umschalten}
         >
           {offen ? 'Weniger' : 'Mehr'}
         </button>

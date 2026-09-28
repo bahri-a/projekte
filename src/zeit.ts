@@ -26,6 +26,7 @@ export function plusTage(basis: Date, tage: number): Date {
 }
 
 export interface Stichtage {
+  gestern: string;
   heute: string;
   morgen: string;
   sonntag: string;
@@ -35,6 +36,7 @@ export function stichtage(jetzt: Date = new Date()): Stichtage {
   // Woche beginnt am Montag: Tage bis Sonntag (Sonntag selbst = 0).
   const bisSonntag = (7 - jetzt.getDay()) % 7;
   return {
+    gestern: alsDatum(plusTage(jetzt, -1)),
     heute: alsDatum(jetzt),
     morgen: alsDatum(plusTage(jetzt, 1)),
     sonntag: alsDatum(plusTage(jetzt, bisSonntag)),
@@ -75,4 +77,26 @@ export function gruppiere(eintraege: Eintrag[], t: Stichtage) {
       .filter((e) => gruppeVon(e.datum, t) === g.id)
       .sort(g.id === 'ohne' ? nachErstellt : nachDatum),
   })).filter((g) => g.eintraege.length > 0);
+}
+
+const WOCHENTAGE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const MONATE = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
+
+// „gestern“, „heute“, „morgen“, sonst „Fr, 3. Okt.“ (mit Jahr, wenn es nicht
+// das laufende ist). Mit Uhrzeit angehängt: „morgen, 10:00“. Unter „Heute“
+// steht nur die Uhrzeit.
+export function datumsText(e: Pick<Eintrag, 'datum' | 'uhrzeit'>, t: Stichtage): string {
+  if (!e.datum) return '';
+  if (e.datum === t.heute && e.uhrzeit) return e.uhrzeit;
+  let text: string;
+  if (e.datum === t.gestern) text = 'gestern';
+  else if (e.datum === t.heute) text = 'heute';
+  else if (e.datum === t.morgen) text = 'morgen';
+  else {
+    const [jahr, monat, tag] = e.datum.split('-').map(Number);
+    const wochentag = WOCHENTAGE[new Date(jahr, monat - 1, tag).getDay()];
+    text = `${wochentag}, ${tag}. ${MONATE[monat - 1]}`;
+    if (e.datum.slice(0, 4) !== t.heute.slice(0, 4)) text += ` ${jahr}`;
+  }
+  return e.uhrzeit ? `${text}, ${e.uhrzeit}` : text;
 }

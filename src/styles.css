@@ -3,7 +3,8 @@
   --text: #1f1f1e;
   --text-leise: #8a8a86;
   --linie: #ecebe8;
-  --akzent: #4f6fae;
+  --akzent: #b07a45;
+  --akzent-gedaempft: #a4754a;
 
   --schrift: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
@@ -48,7 +49,65 @@ body {
 }
 
 .eintrag {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  align-items: baseline;
   padding: 7px 0;
+}
+
+.inhalt {
+  min-width: 0;
+}
+
+.titel {
+  overflow-wrap: anywhere;
+}
+
+.info {
+  margin-top: 1px;
+  font-size: 14px;
+  color: var(--text-leise);
+  overflow-wrap: anywhere;
+}
+
+.datum {
+  font-size: 14px;
+  color: var(--text-leise);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ueberfaellig .datum {
+  color: var(--akzent-gedaempft);
+}
+
+/* Wichtig: kleiner Punkt in der Akzentfarbe links neben dem Titel. */
+.wichtig-punkt {
+  position: absolute;
+  left: -14px;
+  top: 16px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--akzent);
+}
+
+.herkunft {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: -1px;
+  color: var(--text-leise);
+  opacity: 0.8;
+}
+
+.herkunft svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .hinweis {

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ladeEintraege, legeAn, setzeErledigt, type NeueFelder } from './api';
+import { aendere, ladeEintraege, legeAn, setzeErledigt, type NeueFelder } from './api';
 import Eingabe from './Eingabe';
 import Erledigte from './Erledigte';
 import Hinweis, { type HinweisDaten } from './Hinweis';
 import type { Eintrag } from './typen';
 import { gruppiere, stichtage, type Stichtage } from './zeit';
-import Zeile from './Zeile';
+import Zeile, { istVorlaeufig } from './Zeile';
 
 // Liefert die Stichtage und aktualisiert sie, sobald ein neuer Tag beginnt,
 // damit die Gruppen auch bei offen gelassener Seite stimmen.
@@ -27,6 +27,7 @@ export default function App() {
   const [eintraege, setEintraege] = useState<Eintrag[] | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [hinweis, setHinweis] = useState<HinweisDaten | null>(null);
+  const [bearbeitetId, setBearbeitetId] = useState<string | null>(null);
   const hinweisNr = useRef(0);
   // Laufende Nummer je Eintrag: Nur die Antwort auf die letzte Änderung wird
   // übernommen, damit eine späte Antwort ein „Rückgängig“ nicht überschreibt.
@@ -91,6 +92,24 @@ export default function App() {
     }
   }
 
+  function bearbeiten(eintrag: Eintrag | null) {
+    setBearbeitetId(eintrag && !istVorlaeufig(eintrag) ? eintrag.id : null);
+  }
+
+  // Übernimmt die Änderung sofort und speichert sie; quelle und quellId
+  // bleiben unverändert.
+  async function speichern(eintrag: Eintrag, felder: NeueFelder) {
+    setBearbeitetId(null);
+    ersetze({ ...eintrag, ...felder });
+    try {
+      ersetze(await aendere(eintrag.id, felder));
+      setFehler(null);
+    } catch {
+      ersetze(eintrag);
+      setFehler('Die Änderung konnte nicht gespeichert werden.');
+    }
+  }
+
   function abhaken(eintrag: Eintrag) {
     void setzeStatus(eintrag, true);
     zeigeHinweis('Erledigt', () => void setzeStatus(eintrag, false));
@@ -114,13 +133,23 @@ export default function App() {
                 stichtage={t}
                 gruppe={g.id}
                 onUmschalten={abhaken}
+                bearbeitet={bearbeitetId === e.id}
+                onBearbeiten={bearbeiten}
+                onSpeichern={(e, felder) => void speichern(e, felder)}
               />
             ))}
           </ul>
         </section>
       ))}
       {eintraege && (
-        <Erledigte eintraege={eintraege} stichtage={t} onWiederOeffnen={(e) => void setzeStatus(e, false)} />
+        <Erledigte
+          eintraege={eintraege}
+          stichtage={t}
+          onWiederOeffnen={(e) => void setzeStatus(e, false)}
+          bearbeitetId={bearbeitetId}
+          onBearbeiten={bearbeiten}
+          onSpeichern={(e, felder) => void speichern(e, felder)}
+        />
       )}
       <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />
     </main>

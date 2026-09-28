@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { NeueFelder } from './api';
 import type { Eintrag } from './typen';
 import type { Stichtage } from './zeit';
 import Zeile from './Zeile';
@@ -7,11 +8,21 @@ interface Props {
   eintraege: Eintrag[];
   stichtage: Stichtage;
   onWiederOeffnen: (eintrag: Eintrag) => void;
+  bearbeitetId: string | null;
+  onBearbeiten: (eintrag: Eintrag | null) => void;
+  onSpeichern: (eintrag: Eintrag, felder: NeueFelder) => void;
 }
 
 // Schalter unten auf der Seite und der aufklappbare Bereich mit den erledigten
 // Einträgen, zuletzt erledigte oben.
-export default function Erledigte({ eintraege, stichtage, onWiederOeffnen }: Props) {
+export default function Erledigte({
+  eintraege,
+  stichtage,
+  onWiederOeffnen,
+  bearbeitetId,
+  onBearbeiten,
+  onSpeichern,
+}: Props) {
   const [sichtbar, setSichtbar] = useState(false);
   const erledigte = eintraege
     .filter((e) => e.erledigt)
@@ -41,7 +52,15 @@ export default function Erledigte({ eintraege, stichtage, onWiederOeffnen }: Pro
         <section id="erledigte-liste" className="erledigte-bereich" aria-label="Erledigt">
           <ul className="liste">
             {erledigte.map((e) => (
-              <Zeile key={e.id} eintrag={e} stichtage={stichtage} onUmschalten={onWiederOeffnen} />
+              <Zeile
+                key={e.id}
+                eintrag={e}
+                stichtage={stichtage}
+                onUmschalten={onWiederOeffnen}
+                bearbeitet={bearbeitetId === e.id}
+                onBearbeiten={onBearbeiten}
+                onSpeichern={onSpeichern}
+              />
             ))}
           </ul>
         </section>

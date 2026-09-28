@@ -34,3 +34,10 @@ export function setzeErledigt(id: string, erledigt: boolean): Promise<Eintrag> {
     body: JSON.stringify({ erledigt }),
   });
 }
+
+export function aendere(id: string, felder: Partial<NeueFelder>): Promise<Eintrag> {
+  return anfrage<Eintrag>(`/api/items/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(felder),
+  });
+}

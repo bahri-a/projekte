@@ -48,10 +48,13 @@ app.patch('/api/items/:id', async (req, res) => {
     res.status(400).json({ fehler: pruefung.fehler });
     return;
   }
-  const { erledigt } = pruefung.aenderung;
+  const { erledigt, ...felder } = pruefung.aenderung;
   const eintrag = await aendereDaten(dataPath, (daten) => {
     const e = daten.items.find((x) => x.id === req.params.id);
     if (!e) return null;
+    Object.assign(e, felder);
+    // Uhrzeit gibt es nur zusammen mit einem Datum.
+    if (!e.datum) e.uhrzeit = null;
     if (erledigt !== undefined && erledigt !== e.erledigt) {
       e.erledigt = erledigt;
       e.erledigtAm = erledigt ? new Date().toISOString() : null;

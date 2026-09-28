@@ -1,4 +1,6 @@
 import { useRef, useState, type MouseEvent } from 'react';
+import type { NeueFelder } from './api';
+import Bearbeitung from './Bearbeitung';
 import { ausblenden } from './bewegung';
 import Herkunft from './Herkunft';
 import type { Eintrag } from './typen';
@@ -11,6 +13,9 @@ interface Props {
   gruppe?: Gruppe;
   // Abhaken (offener Eintrag) oder wieder öffnen (erledigter Eintrag).
   onUmschalten: (eintrag: Eintrag) => void;
+  bearbeitet: boolean;
+  onBearbeiten: (eintrag: Eintrag | null) => void;
+  onSpeichern: (eintrag: Eintrag, felder: NeueFelder) => void;
 }
 
 // Vorläufige Einträge (noch ohne Antwort des Servers) haben diese id.
@@ -25,7 +30,15 @@ function naechstesFeld(feld: HTMLElement): HTMLElement | null {
   return alle[i + 1] ?? alle[i - 1] ?? null;
 }
 
-export default function Zeile({ eintrag: e, stichtage, gruppe, onUmschalten }: Props) {
+export default function Zeile({
+  eintrag: e,
+  stichtage,
+  gruppe,
+  onUmschalten,
+  bearbeitet,
+  onBearbeiten,
+  onSpeichern,
+}: Props) {
   const zeile = useRef<HTMLLIElement>(null);
   const [geht, setGeht] = useState(false);
   const vorlaeufig = istVorlaeufig(e);
@@ -37,7 +50,25 @@ export default function Zeile({ eintrag: e, stichtage, gruppe, onUmschalten }: P
     setGeht(true);
     await ausblenden(zeile.current);
     onUmschalten(e);
-    if (fokusWeiter) requestAnimationFrame(() => fokusWeiter.focus());
+    if (fokusWeiter) setTimeout(() => fokusWeiter.focus());
+  }
+
+  // Nach dem Schließen der Bearbeitung den Fokus zurück auf den Eintrag.
+  function schliessen(felder?: NeueFelder) {
+    if (felder) onSpeichern(e, felder);
+    else onBearbeiten(null);
+    // Die Zeile kann dabei in eine andere Gruppe gewandert sein.
+    setTimeout(() =>
+      document.querySelector<HTMLElement>(`[data-eintrag="${CSS.escape(e.id)}"] .inhalt`)?.focus(),
+    );
+  }
+
+  if (bearbeitet) {
+    return (
+      <li className="eintrag eintrag-bearbeiten" data-eintrag={e.id}>
+        <Bearbeitung eintrag={e} onSpeichern={schliessen} onAbbrechen={() => schliessen()} />
+      </li>
+    );
   }
 
   const abgehakt = e.erledigt !== geht;
@@ -52,7 +83,7 @@ export default function Zeile({ eintrag: e, stichtage, gruppe, onUmschalten }: P
     .join(' ');
 
   return (
-    <li ref={zeile} className={klassen}>
+    <li ref={zeile} className={klassen} data-eintrag={e.id}>
       {e.wichtig && <span className="wichtig-punkt" title="Wichtig" aria-label="Wichtig" role="img" />}
       <button
         type="button"
@@ -70,13 +101,19 @@ export default function Zeile({ eintrag: e, stichtage, gruppe, onUmschalten }: P
           </svg>
         </span>
       </button>
-      <div className="inhalt">
-        <div className="titel">
+      <button
+        type="button"
+        className="inhalt"
+        title="Bearbeiten"
+        aria-label={`Bearbeiten: ${e.titel}`}
+        onClick={() => onBearbeiten(e)}
+      >
+        <span className="titel">
           {e.titel}
           <Herkunft quelle={e.quelle} />
-        </div>
-        {e.info && <div className="info">{e.info}</div>}
-      </div>
+        </span>
+        {e.info && <span className="info">{e.info}</span>}
+      </button>
       {e.datum && <div className="datum">{datumsText(e, stichtage, gruppe === 'heute')}</div>}
     </li>
   );

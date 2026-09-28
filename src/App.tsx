@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ladeEintraege, legeAn, setzeErledigt, type NeueFelder } from './api';
 import Eingabe from './Eingabe';
+import Erledigte from './Erledigte';
 import Hinweis, { type HinweisDaten } from './Hinweis';
 import type { Eintrag } from './typen';
 import { gruppiere, stichtage, type Stichtage } from './zeit';
@@ -112,12 +113,15 @@ export default function App() {
                 eintrag={e}
                 stichtage={t}
                 ueberfaellig={g.id === 'ueberfaellig'}
-                onAbhaken={abhaken}
+                onUmschalten={abhaken}
               />
             ))}
           </ul>
         </section>
       ))}
+      {eintraege && (
+        <Erledigte eintraege={eintraege} stichtage={t} onWiederOeffnen={(e) => void setzeStatus(e, false)} />
+      )}
       <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />
     </main>
   );

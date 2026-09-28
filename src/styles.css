@@ -100,6 +100,10 @@ body {
   outline-offset: -3px;
 }
 
+.abhaken[aria-disabled='true'] {
+  cursor: default;
+}
+
 .abhaken[aria-checked='true'] .kreis {
   border-color: var(--text-leise);
   background: var(--text-leise);
@@ -364,4 +368,42 @@ body {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Erledigte */
+.erledigte {
+  margin-top: 48px;
+}
+
+.erledigte-schalter {
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--text-leise);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.erledigte-schalter:hover,
+.erledigte-schalter:focus-visible {
+  color: var(--text);
+}
+
+.erledigte-bereich {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--linie);
+}
+
+.eintrag.erledigt .titel {
+  color: var(--text-leise);
+  text-decoration: line-through;
+  text-decoration-color: var(--kreis);
+}
+
+.eintrag.erledigt .info,
+.eintrag.erledigt .datum,
+.eintrag.erledigt .wichtig-punkt {
+  opacity: 0.7;
 }

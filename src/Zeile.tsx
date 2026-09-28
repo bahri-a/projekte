@@ -7,22 +7,46 @@ import { datumsText, type Stichtage } from './zeit';
 interface Props {
   eintrag: Eintrag;
   stichtage: Stichtage;
-  ueberfaellig: boolean;
-  onAbhaken: (eintrag: Eintrag) => void;
+  ueberfaellig?: boolean;
+  // Abhaken (offener Eintrag) oder wieder öffnen (erledigter Eintrag).
+  onUmschalten: (eintrag: Eintrag) => void;
 }
 
-export default function Zeile({ eintrag: e, stichtage, ueberfaellig, onAbhaken }: Props) {
+// Vorläufige Einträge (noch ohne Antwort des Servers) haben diese id.
+export function istVorlaeufig(e: Eintrag): boolean {
+  return e.id.startsWith('neu-');
+}
+
+// Das Abhak-Feld, das nach dem Verschwinden dieser Zeile den Fokus bekommt.
+function naechstesFeld(feld: HTMLElement): HTMLElement | null {
+  const alle = [...document.querySelectorAll<HTMLElement>('.abhaken')];
+  const i = alle.indexOf(feld);
+  return alle[i + 1] ?? alle[i - 1] ?? null;
+}
+
+export default function Zeile({ eintrag: e, stichtage, ueberfaellig = false, onUmschalten }: Props) {
   const zeile = useRef<HTMLLIElement>(null);
   const [geht, setGeht] = useState(false);
+  const vorlaeufig = istVorlaeufig(e);
 
-  async function abhaken() {
-    if (geht) return;
+  async function umschalten(ereignis: React.MouseEvent<HTMLButtonElement>) {
+    if (geht || vorlaeufig) return;
+    const feld = ereignis.currentTarget;
+    const fokusWeiter = document.activeElement === feld ? naechstesFeld(feld) : null;
     setGeht(true);
     await ausblenden(zeile.current);
-    onAbhaken(e);
+    onUmschalten(e);
+    if (fokusWeiter) requestAnimationFrame(() => fokusWeiter.focus());
   }
 
-  const klassen = ['eintrag', e.wichtig && 'wichtig', ueberfaellig && 'ueberfaellig', geht && 'geht']
+  const abgehakt = e.erledigt !== geht;
+  const klassen = [
+    'eintrag',
+    e.wichtig && 'wichtig',
+    ueberfaellig && 'ueberfaellig',
+    e.erledigt && 'erledigt',
+    geht && 'geht',
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -33,10 +57,11 @@ export default function Zeile({ eintrag: e, stichtage, ueberfaellig, onAbhaken }
         type="button"
         className="abhaken"
         role="checkbox"
-        aria-checked={geht}
+        aria-checked={abgehakt}
+        aria-disabled={vorlaeufig || undefined}
         aria-label={`Erledigt: ${e.titel}`}
-        title="Als erledigt markieren"
-        onClick={abhaken}
+        title={e.erledigt ? 'Wieder öffnen' : 'Als erledigt markieren'}
+        onClick={umschalten}
       >
         <span className="kreis" aria-hidden="true" />
       </button>

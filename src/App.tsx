@@ -112,7 +112,7 @@ export default function App() {
                 key={e.id}
                 eintrag={e}
                 stichtage={t}
-                ueberfaellig={g.id === 'ueberfaellig'}
+                gruppe={g.id}
                 onUmschalten={abhaken}
               />
             ))}

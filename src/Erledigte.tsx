@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Eintrag } from './typen';
 import type { Stichtage } from './zeit';
 import Zeile from './Zeile';
@@ -16,7 +16,15 @@ export default function Erledigte({ eintraege, stichtage, onWiederOeffnen }: Pro
   const erledigte = eintraege
     .filter((e) => e.erledigt)
     .sort((a, b) => ((a.erledigtAm ?? '') < (b.erledigtAm ?? '') ? 1 : -1));
-  if (erledigte.length === 0) return null;
+  const keine = erledigte.length === 0;
+
+  // Ohne erledigte Einträge verschwindet der Schalter; danach beginnt der
+  // Bereich wieder zugeklappt.
+  useEffect(() => {
+    if (keine) setSichtbar(false);
+  }, [keine]);
+
+  if (keine) return null;
 
   return (
     <div className="erledigte">

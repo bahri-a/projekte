@@ -83,11 +83,15 @@ const WOCHENTAGE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const MONATE = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
 
 // „gestern“, „heute“, „morgen“, sonst „Fr, 3. Okt.“ (mit Jahr, wenn es nicht
-// das laufende ist). Mit Uhrzeit angehängt: „morgen, 10:00“. Unter „Heute“
-// steht nur die Uhrzeit.
-export function datumsText(e: Pick<Eintrag, 'datum' | 'uhrzeit'>, t: Stichtage): string {
+// das laufende ist). Mit Uhrzeit angehängt: „morgen, 10:00“. Unter der
+// Überschrift „Heute“ (unterHeute) steht nur die Uhrzeit.
+export function datumsText(
+  e: Pick<Eintrag, 'datum' | 'uhrzeit'>,
+  t: Stichtage,
+  unterHeute = false,
+): string {
   if (!e.datum) return '';
-  if (e.datum === t.heute && e.uhrzeit) return e.uhrzeit;
+  if (unterHeute && e.datum === t.heute && e.uhrzeit) return e.uhrzeit;
   let text: string;
   if (e.datum === t.gestern) text = 'gestern';
   else if (e.datum === t.heute) text = 'heute';

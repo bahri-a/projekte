@@ -1,13 +1,14 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type MouseEvent } from 'react';
 import { ausblenden } from './bewegung';
 import Herkunft from './Herkunft';
 import type { Eintrag } from './typen';
-import { datumsText, type Stichtage } from './zeit';
+import { datumsText, type Gruppe, type Stichtage } from './zeit';
 
 interface Props {
   eintrag: Eintrag;
   stichtage: Stichtage;
-  ueberfaellig?: boolean;
+  // Die Zeitgruppe, unter der die Zeile steht (im Erledigt-Bereich keine).
+  gruppe?: Gruppe;
   // Abhaken (offener Eintrag) oder wieder öffnen (erledigter Eintrag).
   onUmschalten: (eintrag: Eintrag) => void;
 }
@@ -24,12 +25,12 @@ function naechstesFeld(feld: HTMLElement): HTMLElement | null {
   return alle[i + 1] ?? alle[i - 1] ?? null;
 }
 
-export default function Zeile({ eintrag: e, stichtage, ueberfaellig = false, onUmschalten }: Props) {
+export default function Zeile({ eintrag: e, stichtage, gruppe, onUmschalten }: Props) {
   const zeile = useRef<HTMLLIElement>(null);
   const [geht, setGeht] = useState(false);
   const vorlaeufig = istVorlaeufig(e);
 
-  async function umschalten(ereignis: React.MouseEvent<HTMLButtonElement>) {
+  async function umschalten(ereignis: MouseEvent<HTMLButtonElement>) {
     if (geht || vorlaeufig) return;
     const feld = ereignis.currentTarget;
     const fokusWeiter = document.activeElement === feld ? naechstesFeld(feld) : null;
@@ -43,7 +44,7 @@ export default function Zeile({ eintrag: e, stichtage, ueberfaellig = false, onU
   const klassen = [
     'eintrag',
     e.wichtig && 'wichtig',
-    ueberfaellig && 'ueberfaellig',
+    gruppe === 'ueberfaellig' && 'ueberfaellig',
     e.erledigt && 'erledigt',
     geht && 'geht',
   ]
@@ -63,7 +64,11 @@ export default function Zeile({ eintrag: e, stichtage, ueberfaellig = false, onU
         title={e.erledigt ? 'Wieder öffnen' : 'Als erledigt markieren'}
         onClick={umschalten}
       >
-        <span className="kreis" aria-hidden="true" />
+        <span className="kreis" aria-hidden="true">
+          <svg viewBox="0 0 12 12" width="10" height="10">
+            <path d="m2.5 6.2 2.3 2.3 4.7-5" />
+          </svg>
+        </span>
       </button>
       <div className="inhalt">
         <div className="titel">
@@ -72,7 +77,7 @@ export default function Zeile({ eintrag: e, stichtage, ueberfaellig = false, onU
         </div>
         {e.info && <div className="info">{e.info}</div>}
       </div>
-      {e.datum && <div className="datum">{datumsText(e, stichtage)}</div>}
+      {e.datum && <div className="datum">{datumsText(e, stichtage, gruppe === 'heute')}</div>}
     </li>
   );
 }

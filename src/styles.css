@@ -83,6 +83,8 @@ body {
 }
 
 .kreis {
+  display: grid;
+  place-items: center;
   width: 18px;
   height: 18px;
   border: 1.5px solid var(--kreis);
@@ -104,10 +106,22 @@ body {
   cursor: default;
 }
 
+.kreis svg {
+  fill: none;
+  stroke: var(--hintergrund);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
 .abhaken[aria-checked='true'] .kreis {
   border-color: var(--text-leise);
   background: var(--text-leise);
-  box-shadow: inset 0 0 0 3px var(--hintergrund);
+}
+
+.abhaken[aria-checked='true'] .kreis svg {
+  opacity: 1;
 }
 
 .inhalt {

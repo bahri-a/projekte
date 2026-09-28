@@ -1,0 +1,18 @@
+node_modules/
+dist/
+build/
+.vite/
+.env
+.env.*
+.DS_Store
+*.log
+
+# Persönliche Daten
+data/items.json
+data/import-kandidaten.json
+
+# Testdaten werden aus scripts/reset-testdata.ts erzeugt (Datumsangaben relativ zu heute)
+data/items.test.json
+
+# Playwright-MCP-Ausgaben
+.playwright-mcp/

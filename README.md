@@ -55,7 +55,15 @@ Wer die App offen hat, sieht danach oben den Hinweis **„Neue Version verfügba
 
 ## Automatisch erstellte Aufgaben
 
-Die App hat zwei Reiter: **Meine Aufgaben** (selbst erstellt) und **Automatisch**. Im Reiter „Automatisch“ sucht der Knopf **„Aktualisieren“** mit Claude im Second Brain, in den Outlook-Mails dort und in Gmail (letzte 14 Tage) nach neuen Aufgaben und Terminen. Fundstücke erscheinen als Vorschläge, die du annimmst oder ablehnst (beim Ablehnen gibt es 6 Sekunden „Rückgängig“, danach kommt der Fund nie wieder). Angenommene kannst du abhaken, mit dem kleinen X löschen oder in „Meine Aufgaben“ verschieben. Es wird nichts automatisch gelöscht, alles wird nur gelesen. Ein Durchlauf dauert ein bis drei Minuten und läuft mit einem günstigen Modell (Haiku). Nach einem Durchlauf ist „Aktualisieren“ 10 Minuten gesperrt, damit ein Doppelklick nicht doppelt Second Brain, Outlook und Gmail liest.
+Die App hat zwei Reiter: **Meine Aufgaben** (selbst erstellt) und **Automatisch**. Im Reiter „Automatisch“ sucht der Knopf **„Aktualisieren“** mit Claude im Second Brain, in den Outlook-Mails dort und in Gmail (letzte 14 Tage) nach neuen Aufgaben und Terminen. Fundstücke erscheinen als Vorschläge, die du annimmst oder ablehnst (beim Ablehnen gibt es 6 Sekunden „Rückgängig“, danach kommt der Fund nie wieder). Angenommene kannst du abhaken, mit dem kleinen X löschen oder in „Meine Aufgaben“ verschieben. Es wird nichts automatisch gelöscht, alles wird nur gelesen. Die Suche ist auf wenige Tokens ausgelegt:
+
+- Notizen und Outlook-Mails liest der Helfer selbst. An Claude gehen nur **neue** Stellen, die nach Aufgabe, Termin oder Frist aussehen (offene `- [ ]`, Stichwörter wie „Frist“ oder „Abgabe“, aktuelle Datumsangaben), mit etwas Umfeld, dazu neue Mails ohne Zitate und gekürzt. Offensichtliche Newsletter fallen vorher weg. Das alles geht in **einem** Aufruf an Claude. Ist nichts neu, wird Claude gar nicht gefragt.
+- Gmail fragt Claude über den Konnektor ab, aber nur Mails seit dem letzten Lauf und nur mit den drei lesenden Gmail-Werkzeugen. Die übrigen Konnektoren werden dafür nicht geladen.
+- Beide Aufrufe laufen mit Haiku, ohne Denkphase.
+- Was einmal an Claude ging, merkt sich der Helfer in `data/helfer-stand.json` und schickt es nie wieder. Beim allerersten Lauf wird der vorhandene Stand nur vermerkt, ohne dass Claude ihn liest, und Gmail wird einen Tag zurück durchsucht.
+- Das Protokoll zeigt für jeden Lauf, wie viele Tokens verbraucht wurden.
+
+Nach einem Durchlauf ist „Aktualisieren“ 10 Minuten gesperrt, damit ein Doppelklick nicht gleich wieder Gmail abfragt.
 
 Das geht nur auf dem MacBook, auf dem der Helfer läuft (`scripts/helfer.mjs`). Er ist nur auf diesem Mac erreichbar, nimmt nur Anfragen der App an und kann nichts anderes, als diese Suche zu starten.
 

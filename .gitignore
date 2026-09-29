@@ -10,6 +10,7 @@ build/
 # Persönliche Daten
 data/items.json
 data/import-kandidaten.json
+data/helfer-stand.json
 
 # Testdaten und Beispiel-Kandidaten werden aus scripts/reset-testdata.ts erzeugt (Datumsangaben relativ zu heute)
 data/*.test.json

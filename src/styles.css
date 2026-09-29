@@ -1,18 +1,42 @@
+/* Farben: eine Akzentfarbe plus Grautöne. Der Dunkelmodus folgt der
+   Systemeinstellung, ohne eigenen Umschalter. */
 :root {
+  color-scheme: light dark;
+
   --hintergrund: #fbfbfa;
   --text: #1f1f1e;
-  --text-leise: #8a8a86;
+  --text-leise: #74736e;
   --linie: #ecebe8;
   --kreis: #c9c8c3;
   --feld: #ffffff;
+  --feld-rand: #e3e2de;
   --hinweis-hintergrund: #2b2b29;
   --hinweis-text: #f4f3f0;
   --hinweis-aktion: #e2b784;
-  --feld-rand: #e3e2de;
   --akzent: #b07a45;
-  --akzent-gedaempft: #a4754a;
+  --akzent-gedaempft: #96683d;
+  --schatten: rgb(0 0 0 / 0.12);
+  --hinweis-hover: rgb(255 255 255 / 0.08);
 
   --schrift: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --hintergrund: #1a1a19;
+    --text: #e9e8e4;
+    --text-leise: #9a9993;
+    --linie: #2d2d2b;
+    --kreis: #5c5b57;
+    --feld: #242423;
+    --feld-rand: #3a3a37;
+    --hinweis-hintergrund: #393936;
+    --hinweis-text: #e9e8e4;
+    --hinweis-aktion: #e2b784;
+    --akzent: #d29a60;
+    --akzent-gedaempft: #c9955f;
+    --schatten: rgb(0 0 0 / 0.4);
+  }
 }
 
 * {
@@ -361,7 +385,7 @@ body {
   background: var(--hinweis-hintergrund);
   color: var(--hinweis-text);
   font-size: 14px;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  box-shadow: 0 4px 16px var(--schatten);
   pointer-events: auto;
   animation: hinweis-rein 180ms ease-out;
 }
@@ -383,7 +407,7 @@ body {
 
 .hinweis-aktion:hover,
 .hinweis-aktion:focus-visible {
-  background: rgb(255 255 255 / 0.08);
+  background: var(--hinweis-hover);
   outline: none;
 }
 

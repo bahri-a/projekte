@@ -1,5 +1,9 @@
 export type Quelle = 'manuell' | 'second-brain' | 'email';
 
+// „eigen“: selbst erstellt. „automatisch“: aus Second Brain oder E-Mail
+// vorgeschlagen; solange `vorschlag` true ist, wartet er auf Annehmen/Ablehnen.
+export type Bereich = 'eigen' | 'automatisch';
+
 export interface Eintrag {
   id: string;
   titel: string;
@@ -12,6 +16,8 @@ export interface Eintrag {
   erledigtAm: string | null;
   quelle: Quelle;
   quellId: string | null;
+  bereich: Bereich;
+  vorschlag: boolean;
 }
 
 // Vorläufige Einträge (noch ohne Antwort des Servers) haben diese id.

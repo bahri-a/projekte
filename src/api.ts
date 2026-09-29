@@ -52,6 +52,16 @@ export function aendere(id: string, felder: Partial<NeueFelder>): Promise<Eintra
   return aendereDaten((d) => bestand.aendere(d, id, felder));
 }
 
+// Vorschlag annehmen: bleibt im Bereich „automatisch“, wartet nicht mehr.
+export function nimmAn(id: string): Promise<Eintrag> {
+  return aendereDaten((d) => bestand.aendere(d, id, { vorschlag: false }));
+}
+
+// Angenommenen Eintrag in „Meine Aufgaben“ verschieben (oder zurück).
+export function setzeBereich(id: string, bereich: Eintrag['bereich']): Promise<Eintrag> {
+  return aendereDaten((d) => bestand.aendere(d, id, { bereich }));
+}
+
 export interface Geloescht {
   eintrag: Eintrag;
   index: number;

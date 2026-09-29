@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aendere, importiere, leer, legeAn, loesche, stelleWiederHer } from './bestand';
+import { aendere, ausText, importiere, leer, legeAn, loesche, stelleWiederHer } from './bestand';
 
 const neu = { titel: 'Zahnarzt', info: '', datum: '2026-10-05', uhrzeit: '09:30', wichtig: false };
 const mail = (quellId: string, titel = 'Antworten') => ({ titel, quelle: 'email', quellId });
@@ -83,5 +83,55 @@ describe('Import einer Sicherung', () => {
 
   it('lehnt unbekannte Formate ab', () => {
     expect(() => importiere(leer(), { etwas: 1 })).toThrow('Die Datei hat kein bekanntes Format.');
+  });
+});
+
+describe('Reiter „Meine Aufgaben“ und „Automatisch“', () => {
+  it('legt eigene Einträge in „eigen“ an, neue Funde als Vorschlag in „automatisch“', () => {
+    const d = leer();
+    expect(legeAn(d, neu)).toMatchObject({ bereich: 'eigen', vorschlag: false });
+    importiere(d, [mail('a')]);
+    expect(d.items[1]).toMatchObject({ bereich: 'automatisch', vorschlag: true });
+  });
+
+  it('Annehmen lässt den Eintrag in „automatisch“, Verschieben macht ihn eigen', () => {
+    const d = leer();
+    importiere(d, [mail('a')]);
+    const { id } = d.items[0];
+    expect(aendere(d, id, { vorschlag: false })).toMatchObject({ bereich: 'automatisch', vorschlag: false });
+    const e = aendere(d, id, { bereich: 'eigen' });
+    expect(e).toMatchObject({ bereich: 'eigen', vorschlag: false, quelle: 'email', quellId: 'a' });
+    // Derselbe Fund wird nicht noch einmal vorgeschlagen.
+    expect(importiere(d, [mail('a')])).toMatchObject({ neu: 0, vorhanden: 1 });
+    expect(() => aendere(d, id, { bereich: 'irgendwo' })).toThrow('bereich');
+  });
+
+  it('Ablehnen (Löschen) merkt den Fund und Rückgängig holt den Vorschlag zurück', () => {
+    const d = leer();
+    importiere(d, [mail('a')]);
+    const geloescht = loesche(d, d.items[0].id);
+    expect(importiere(d, [mail('a')])).toMatchObject({ neu: 0, geloescht: 1 });
+    stelleWiederHer(d, geloescht);
+    expect(d.items[0]).toMatchObject({ bereich: 'automatisch', vorschlag: true });
+  });
+
+  it('ordnet ältere Daten ohne Reiter zu: Importierte gelten als angenommen', () => {
+    const alt = (quelle: string) => ({
+      id: quelle, titel: 'x', info: '', datum: null, uhrzeit: null, wichtig: false, erledigt: false,
+      erstelltAm: '2026-09-01T00:00:00.000Z', erledigtAm: null, quelle, quellId: quelle === 'manuell' ? null : 'q',
+    });
+    const d = ausText(JSON.stringify({ version: 1, items: [alt('manuell'), alt('email')], geloeschteQuellen: [] }))!;
+    expect(d.items[0]).toMatchObject({ bereich: 'eigen', vorschlag: false });
+    expect(d.items[1]).toMatchObject({ bereich: 'automatisch', vorschlag: false });
+  });
+
+  it('übernimmt Sicherungen ohne Reiter-Felder', () => {
+    const d = leer();
+    const alt = {
+      id: 'z', titel: 'x', info: '', datum: null, uhrzeit: null, wichtig: false, erledigt: false,
+      erstelltAm: '2026-09-01T00:00:00.000Z', erledigtAm: null, quelle: 'second-brain', quellId: 'q',
+    };
+    importiere(d, { version: 1, items: [alt], geloeschteQuellen: [] });
+    expect(d.items[0]).toMatchObject({ bereich: 'automatisch', vorschlag: false });
   });
 });

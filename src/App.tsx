@@ -5,6 +5,8 @@ import {
   ladeEintraege,
   legeAn,
   loesche,
+  nimmAn,
+  setzeBereich,
   setzeErledigt,
   stelleWiederHer,
   type NeueFelder,
@@ -14,8 +16,9 @@ import Datenleiste from './Datenleiste';
 import Eingabe from './Eingabe';
 import Erledigte from './Erledigte';
 import Hinweis, { type HinweisDaten } from './Hinweis';
-import { istVorlaeufig, type Eintrag } from './typen';
+import { istVorlaeufig, type Bereich, type Eintrag } from './typen';
 import { gruppiere, stichtage, type Stichtage } from './zeit';
+import Vorschlaege from './Vorschlaege';
 import Zeile from './Zeile';
 
 // Liefert die Stichtage und aktualisiert sie, sobald ein neuer Tag beginnt,
@@ -34,7 +37,18 @@ function useStichtage(): Stichtage {
   return t;
 }
 
+const REITER_SCHLUESSEL = 'projekte-reiter';
+
+function gespeicherterReiter(): Bereich {
+  try {
+    return localStorage.getItem(REITER_SCHLUESSEL) === 'automatisch' ? 'automatisch' : 'eigen';
+  } catch {
+    return 'eigen';
+  }
+}
+
 export default function App() {
+  const [reiter, setReiterState] = useState<Bereich>(gespeicherterReiter);
   const [eintraege, setEintraege] = useState<Eintrag[] | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [hinweis, setHinweis] = useState<HinweisDaten | null>(null);
@@ -56,13 +70,21 @@ export default function App() {
     bitteUmDauerhaftenSpeicher();
   }, [laden]);
 
+  function setReiter(neu: Bereich) {
+    setReiterState(neu);
+    setBearbeitetId(null);
+    try {
+      localStorage.setItem(REITER_SCHLUESSEL, neu);
+    } catch {}
+  }
+
   function ersetze(neu: Eintrag) {
     setEintraege((alt) => (alt ?? []).map((e) => (e.id === neu.id ? neu : e)));
   }
 
-  function zeigeHinweis(text: string, onRueckgaengig: () => void) {
+  function zeigeHinweis(text: string, onRueckgaengig: () => void, dauer?: number) {
     hinweisNr.current += 1;
-    setHinweis({ nr: hinweisNr.current, text, onRueckgaengig });
+    setHinweis({ nr: hinweisNr.current, text, onRueckgaengig, dauer });
   }
 
   const schliesseHinweis = useCallback(() => setHinweis(null), []);
@@ -77,6 +99,8 @@ export default function App() {
       erledigtAm: null,
       quelle: 'manuell',
       quellId: null,
+      bereich: 'eigen',
+      vorschlag: false,
     };
     setEintraege((alt) => [...(alt ?? []), vorlaeufig]);
     try {
@@ -139,14 +163,14 @@ export default function App() {
 
   // Löscht sofort (auch auf dem Server), damit der Eintrag nach einem
   // Neuladen weg ist. „Rückgängig“ legt ihn unverändert wieder an.
-  async function loeschen(eintrag: Eintrag) {
+  async function loeschen(eintrag: Eintrag, hinweisText = 'Gelöscht', dauer?: number) {
     geschlossenUm.current = Date.now();
     setBearbeitetId(null);
     setEintraege((alt) => (alt ?? []).filter((e) => e.id !== eintrag.id));
     try {
       const geloescht = await loesche(eintrag.id);
       setFehler(null);
-      zeigeHinweis('Gelöscht', () => void wiederherstellen(geloescht.eintrag, geloescht.index));
+      zeigeHinweis(hinweisText, () => void wiederherstellen(geloescht.eintrag, geloescht.index), dauer);
     } catch {
       setEintraege((alt) => [...(alt ?? []), eintrag]);
       setFehler('Der Eintrag konnte nicht gelöscht werden.');
@@ -164,18 +188,92 @@ export default function App() {
     }
   }
 
+  // Ablehnen ist Löschen: Der Fund wird gemerkt und nie wieder vorgeschlagen.
+  // „Rückgängig“ gibt es 6 Sekunden lang.
+  function ablehnen(eintrag: Eintrag) {
+    void loeschen(eintrag, 'Abgelehnt', 6000);
+  }
+
+  async function annehmen(eintrag: Eintrag) {
+    ersetze({ ...eintrag, vorschlag: false });
+    try {
+      ersetze(await nimmAn(eintrag.id));
+      setFehler(null);
+    } catch {
+      ersetze(eintrag);
+      setFehler('Die Änderung konnte nicht gespeichert werden.');
+    }
+  }
+
+  async function verschiebeInBereich(eintrag: Eintrag, bereich: Bereich) {
+    ersetze({ ...eintrag, bereich, vorschlag: false });
+    try {
+      ersetze(await setzeBereich(eintrag.id, bereich));
+      setFehler(null);
+    } catch {
+      ersetze(eintrag);
+      setFehler('Die Änderung konnte nicht gespeichert werden.');
+    }
+  }
+
+  function verschieben(eintrag: Eintrag) {
+    geschlossenUm.current = Date.now();
+    setBearbeitetId(null);
+    void verschiebeInBereich(eintrag, 'eigen');
+    zeigeHinweis('In „Meine Aufgaben“ verschoben', () => void verschiebeInBereich(eintrag, 'automatisch'));
+  }
+
   function abhaken(eintrag: Eintrag) {
     void setzeStatus(eintrag, true);
     zeigeHinweis('Erledigt', () => void setzeStatus(eintrag, false));
   }
 
-  const gruppen = eintraege ? gruppiere(eintraege, t) : [];
+  const automatisch = reiter === 'automatisch';
+  const vorschlaege = (eintraege ?? []).filter((e) => e.bereich === 'automatisch' && e.vorschlag);
+  const sichtbare = (eintraege ?? []).filter((e) =>
+    automatisch ? e.bereich === 'automatisch' && !e.vorschlag : e.bereich === 'eigen',
+  );
+  const gruppen = eintraege ? gruppiere(sichtbare, t) : [];
 
   return (
     <main className="seite">
-      <Eingabe onHinzufuegen={hinzufuegen} />
+      <nav className="reiter" role="tablist" aria-label="Ansicht">
+        <button
+          type="button"
+          role="tab"
+          id="reiter-eigen"
+          className="reiter-knopf"
+          aria-selected={!automatisch}
+          onClick={() => setReiter('eigen')}
+        >
+          Meine Aufgaben
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="reiter-automatisch"
+          className="reiter-knopf"
+          aria-selected={automatisch}
+          onClick={() => setReiter('automatisch')}
+        >
+          Automatisch
+          {vorschlaege.length > 0 && (
+            <span className="reiter-zahl" title="Neue Vorschläge" aria-label={`${vorschlaege.length} neue Vorschläge`}>
+              {vorschlaege.length}
+            </span>
+          )}
+        </button>
+      </nav>
+      {!automatisch && <Eingabe onHinzufuegen={hinzufuegen} />}
       {fehler && <p className="meldung">{fehler}</p>}
-      {eintraege && gruppen.length === 0 && <p className="meldung">Nichts geplant.</p>}
+      {automatisch && (
+        <Vorschlaege eintraege={vorschlaege} stichtage={t} onAnnehmen={(e) => void annehmen(e)} onAblehnen={ablehnen} />
+      )}
+      {eintraege && gruppen.length === 0 && (automatisch ? vorschlaege.length === 0 : true) && (
+        <p className="meldung">
+          {automatisch ? 'Keine Vorschläge. Mit „Aktualisieren“ nach Neuem suchen.' : 'Nichts geplant.'}
+        </p>
+      )}
       {gruppen.map((g) => (
         <section key={g.id} className="gruppe" aria-labelledby={`gruppe-${g.id}`}>
           <h2 id={`gruppe-${g.id}`} className="gruppe-titel">{g.titel}</h2>
@@ -191,6 +289,7 @@ export default function App() {
                 onBearbeiten={bearbeiten}
                 onSpeichern={(e, felder) => void speichern(e, felder)}
                 onLoeschen={(e) => void loeschen(e)}
+                onVerschieben={automatisch ? verschieben : undefined}
               />
             ))}
           </ul>
@@ -198,16 +297,17 @@ export default function App() {
       ))}
       {eintraege && (
         <Erledigte
-          eintraege={eintraege}
+          eintraege={sichtbare}
           stichtage={t}
           onWiederOeffnen={(e) => void setzeStatus(e, false)}
           bearbeitetId={bearbeitetId}
           onBearbeiten={bearbeiten}
           onSpeichern={(e, felder) => void speichern(e, felder)}
           onLoeschen={(e) => void loeschen(e)}
+          onVerschieben={automatisch ? verschieben : undefined}
         />
       )}
-      <Datenleiste onImportiert={laden} />
+      <Datenleiste onImportiert={laden} mitAktualisieren={automatisch} />
       <Aktualisierung />
       <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />
     </main>

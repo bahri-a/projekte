@@ -12,6 +12,7 @@ interface Props {
   onBearbeiten: (eintrag: Eintrag | null) => void;
   onSpeichern: (eintrag: Eintrag, felder: NeueFelder) => void;
   onLoeschen: (eintrag: Eintrag) => void;
+  onVerschieben?: (eintrag: Eintrag) => void;
 }
 
 // Schalter unten auf der Seite und der aufklappbare Bereich mit den erledigten
@@ -24,6 +25,7 @@ export default function Erledigte({
   onBearbeiten,
   onSpeichern,
   onLoeschen,
+  onVerschieben,
 }: Props) {
   const [sichtbar, setSichtbar] = useState(false);
   const erledigte = eintraege
@@ -63,6 +65,7 @@ export default function Erledigte({
                 onBearbeiten={onBearbeiten}
                 onSpeichern={onSpeichern}
                 onLoeschen={onLoeschen}
+                onVerschieben={onVerschieben}
               />
             ))}
           </ul>

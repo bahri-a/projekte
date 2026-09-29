@@ -83,6 +83,8 @@ export interface Aenderung {
   uhrzeit?: string | null;
   wichtig?: boolean;
   erledigt?: boolean;
+  bereich?: Eintrag['bereich'];
+  vorschlag?: boolean;
 }
 export type Aenderungsergebnis = { ok: true; aenderung: Aenderung } | { ok: false; fehler: string };
 
@@ -123,7 +125,14 @@ export function pruefeAenderung(body: unknown): Aenderungsergebnis {
     } else aenderung.uhrzeit = b.uhrzeit;
   }
 
-  for (const feld of ['wichtig', 'erledigt'] as const) {
+  if (b.bereich !== undefined) {
+    if (b.bereich !== 'eigen' && b.bereich !== 'automatisch') {
+      return { ok: false, fehler: '„bereich“ muss „eigen“ oder „automatisch“ sein.' };
+    }
+    aenderung.bereich = b.bereich;
+  }
+
+  for (const feld of ['wichtig', 'erledigt', 'vorschlag'] as const) {
     if (b[feld] !== undefined) {
       if (typeof b[feld] !== 'boolean') {
         return { ok: false, fehler: `„${feld}“ muss true oder false sein.` };
@@ -163,10 +172,14 @@ export function pruefeWiederherstellung(body: unknown): Wiederherstellung {
     !istZeitpunkt(e.erstelltAm) ||
     !(e.erledigtAm === null || istZeitpunkt(e.erledigtAm)) ||
     typeof e.quelle !== 'string' || !QUELLEN.includes(e.quelle) ||
-    !(e.quellId === null || typeof e.quellId === 'string')
+    !(e.quellId === null || typeof e.quellId === 'string') ||
+    !(e.bereich === undefined || e.bereich === 'eigen' || e.bereich === 'automatisch') ||
+    !(e.vorschlag === undefined || typeof e.vorschlag === 'boolean')
   ) {
     return falsch;
   }
+  // Sicherungen aus der Zeit vor den Reitern haben diese Felder noch nicht.
+  const bereich: Eintrag['bereich'] = e.bereich ?? (e.quelle === 'manuell' ? 'eigen' : 'automatisch');
   const index = typeof b.index === 'number' && Number.isInteger(b.index) && b.index >= 0 ? b.index : Infinity;
   return {
     ok: true,
@@ -183,6 +196,8 @@ export function pruefeWiederherstellung(body: unknown): Wiederherstellung {
       erledigtAm: e.erledigtAm as string | null,
       quelle: e.quelle as Eintrag['quelle'],
       quellId: e.quellId as string | null,
+      bereich,
+      vorschlag: e.vorschlag === true && bereich === 'automatisch',
     },
   };
 }

@@ -17,6 +17,9 @@ interface Props {
   onBearbeiten: (eintrag: Eintrag | null) => void;
   onSpeichern: (eintrag: Eintrag, felder: NeueFelder) => void;
   onLoeschen: (eintrag: Eintrag) => void;
+  // Nur im Reiter „Automatisch“: Eintrag in „Meine Aufgaben“ verschieben.
+  // Dort gibt es außerdem ein kleines X zum Löschen.
+  onVerschieben?: (eintrag: Eintrag) => void;
 }
 
 // Das Herkunftssymbol bleibt mit dem letzten Wort des Titels zusammen,
@@ -62,6 +65,7 @@ export default function Zeile({
   onBearbeiten,
   onSpeichern,
   onLoeschen,
+  onVerschieben,
 }: Props) {
   const zeile = useRef<HTMLLIElement>(null);
   const [geht, setGeht] = useState(false);
@@ -98,6 +102,15 @@ export default function Zeile({
     if (fokusWeiter) setTimeout(() => fokusWeiter.focus());
   }
 
+  async function verschieben() {
+    if (geht || !onVerschieben) return;
+    const fokusWeiter = naechstesFeld(zeile.current);
+    setGeht(true);
+    await ausblenden(zeile.current);
+    onVerschieben(e);
+    if (fokusWeiter) setTimeout(() => fokusWeiter.focus());
+  }
+
   if (bearbeitet) {
     return (
       <li ref={zeile} className={`eintrag eintrag-bearbeiten${geht ? ' geht' : ''}`} data-eintrag={e.id}>
@@ -106,6 +119,7 @@ export default function Zeile({
           onSpeichern={schliessen}
           onAbbrechen={() => schliessen()}
           onLoeschen={loeschen}
+          onVerschieben={onVerschieben && verschieben}
         />
       </li>
     );
@@ -117,6 +131,7 @@ export default function Zeile({
     e.wichtig && 'wichtig',
     gruppe === 'ueberfaellig' && 'ueberfaellig',
     e.erledigt && 'erledigt',
+    onVerschieben && 'mit-x',
     geht && 'geht',
   ]
     .filter(Boolean)
@@ -159,6 +174,23 @@ export default function Zeile({
         {e.info && <span className="info">{e.info}</span>}
       </button>
       {e.datum && <div className="datum">{datumsText(e, stichtage, gruppe === 'heute')}</div>}
+      {onVerschieben && (
+        <button
+          type="button"
+          className="entfernen"
+          title="Löschen"
+          aria-label={`Löschen: ${e.titel}`}
+          disabled={vorlaeufig}
+          onClick={(ereignis) => {
+            if (ereignis.detail > 1) return;
+            void loeschen();
+          }}
+        >
+          <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+            <path d="m3 3 6 6M9 3 3 9" />
+          </svg>
+        </button>
+      )}
     </li>
   );
 }

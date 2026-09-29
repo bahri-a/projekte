@@ -44,6 +44,8 @@ interface TestItem {
   erledigtAm: string | null;
   quelle: Quelle;
   quellId: string | null;
+  bereich: 'eigen' | 'automatisch';
+  vorschlag: boolean;
 }
 
 function item(
@@ -66,6 +68,8 @@ function item(
     erledigtAm: null,
     quelle: 'manuell',
     quellId: null,
+    bereich: opts.quelle && opts.quelle !== 'manuell' ? 'automatisch' : 'eigen',
+    vorschlag: false,
     ...opts,
   };
 }
@@ -137,6 +141,21 @@ const items: TestItem[] = [
     info: 'Von: Prüfungsamt · Betreff: Anmeldefrist Wintersemester',
     datum: tag(-5), wichtig: true, erledigt: true,
     erledigtAm: `${tag(-6)}T08:05:00.000Z`, quelle: 'email', quellId: 'msg-19a2e1d4b0',
+  }),
+  // Neue Vorschläge im Reiter „Automatisch“ (warten auf Annehmen/Ablehnen)
+  item(21, 'Zahnreinigung Termin bestätigen', {
+    info: 'Von: Praxis Dr. Albers · Betreff: Ihr Termin zur Zahnreinigung',
+    datum: tag(3), uhrzeit: '08:30', wichtig: true, quelle: 'email', quellId: 'msg-30c1d0a021',
+    vorschlag: true,
+  }),
+  item(22, 'Seminararbeit Literatur sichten', {
+    info: 'Aus Studium-und-Beruf/wiki/seminararbeit.md',
+    datum: tag(9), quelle: 'second-brain', quellId: 'Studium-und-Beruf/wiki/seminararbeit.md',
+    vorschlag: true,
+  }),
+  item(23, 'Stromanbieter vergleichen', {
+    info: 'Von: Stadtwerke · Betreff: Preisanpassung zum Jahreswechsel',
+    quelle: 'email', quellId: 'msg-30c1d0a023', vorschlag: true,
   }),
 ];
 

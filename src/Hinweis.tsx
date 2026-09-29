@@ -5,6 +5,8 @@ export interface HinweisDaten {
   nr: number;
   text: string;
   onRueckgaengig: () => void;
+  // Anzeigedauer in Millisekunden, Standard 5 Sekunden.
+  dauer?: number;
 }
 
 interface Props {
@@ -25,7 +27,7 @@ export default function Hinweis({ hinweis, onSchliessen }: Props) {
     if (hinweis) {
       letzter.current = hinweis;
       setSichtbar(hinweis);
-      const id = setTimeout(onSchliessen, ANZEIGEDAUER);
+      const id = setTimeout(onSchliessen, hinweis.dauer ?? ANZEIGEDAUER);
       return () => clearTimeout(id);
     }
     const id = setTimeout(() => setSichtbar(null), AUSBLENDEN);

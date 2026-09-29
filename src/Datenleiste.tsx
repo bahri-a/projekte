@@ -5,6 +5,8 @@ import { alsDatum } from './zeit';
 
 interface Props {
   onImportiert: () => void;
+  // „Aktualisieren“ gehört zum Reiter „Automatisch“ und steht nur dort.
+  mitAktualisieren: boolean;
 }
 
 // Helfer auf diesem Mac (scripts/helfer.mjs), der /projekte-import ausführt.
@@ -21,7 +23,7 @@ function importMeldung(z: ImportErgebnis): string {
 // Leise Leiste ganz unten: neue Einträge aus Second Brain und Gmail holen,
 // Datei importieren (Kandidaten oder eine Sicherung) und alle Daten als
 // Sicherungsdatei herunterladen.
-export default function Datenleiste({ onImportiert }: Props) {
+export default function Datenleiste({ onImportiert, mitAktualisieren }: Props) {
   const datei = useRef<HTMLInputElement>(null);
   const [meldung, setMeldung] = useState<string | null>(null);
   const [aktualisiert, setAktualisiert] = useState(false);
@@ -73,10 +75,14 @@ export default function Datenleiste({ onImportiert }: Props) {
 
   return (
     <footer className="datenleiste">
-      <button type="button" className="datenleiste-knopf" disabled={aktualisiert} onClick={() => void aktualisieren()}>
-        Aktualisieren
-      </button>
-      <span className="datenleiste-trenner" aria-hidden="true">·</span>
+      {mitAktualisieren && (
+        <>
+          <button type="button" className="datenleiste-knopf" disabled={aktualisiert} onClick={() => void aktualisieren()}>
+            Aktualisieren
+          </button>
+          <span className="datenleiste-trenner" aria-hidden="true">·</span>
+        </>
+      )}
       <button type="button" className="datenleiste-knopf" onClick={() => datei.current?.click()}>
         Importieren
       </button>

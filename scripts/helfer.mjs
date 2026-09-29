@@ -35,13 +35,16 @@ const WERKZEUGE = [
   'mcp__claude_ai_Gmail__list_labels',
 ];
 
+// Aus dem Outlook-Ordner nur emails.json, nie die Zugangsdaten-Datei.
+const GESPERRT = [`Read(/${SECOND_BRAIN}/Privat/emails/oauth.json)`];
+
 let laeuft = false;
 
 function fuehreImportAus() {
   return new Promise((ok, fehler) => {
     const kind = spawn(
       CLAUDE,
-      ['-p', '/projekte-import', '--allowedTools', ...WERKZEUGE, '--add-dir', SECOND_BRAIN, '--output-format', 'json'],
+      ['-p', '/projekte-import', '--allowedTools', ...WERKZEUGE, '--disallowedTools', ...GESPERRT, '--add-dir', SECOND_BRAIN, '--output-format', 'json'],
       { cwd: PROJEKT, stdio: ['ignore', 'pipe', 'pipe'] },
     );
     let ausgabe = '';

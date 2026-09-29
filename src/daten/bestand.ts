@@ -25,6 +25,15 @@ export function quellSchluessel(e: Pick<Eintrag, 'quelle' | 'quellId'>): string 
   return e.quellId && e.quelle !== 'manuell' ? `${e.quelle}:${e.quellId}` : null;
 }
 
+// Ältere Daten kennen die Reiter noch nicht: Importierte Einträge gelten dort
+// als angenommen und wandern nach „automatisch“, alles andere bleibt „eigen“.
+function ergaenzeBereich(e: Eintrag): Eintrag {
+  if (e.bereich === 'eigen' || e.bereich === 'automatisch') {
+    return typeof e.vorschlag === 'boolean' ? e : { ...e, vorschlag: false };
+  }
+  return { ...e, bereich: e.quelle === 'manuell' ? 'eigen' : 'automatisch', vorschlag: false };
+}
+
 // Liest gespeicherte Daten. Liefert null, wenn das Format nicht stimmt.
 export function ausText(text: string): Daten | null {
   let roh: unknown;
@@ -37,7 +46,7 @@ export function ausText(text: string): Daten | null {
   if (!d || typeof d !== 'object' || !Array.isArray(d.items)) return null;
   return {
     version: 1,
-    items: d.items,
+    items: d.items.map(ergaenzeBereich),
     geloeschteQuellen: Array.isArray(d.geloeschteQuellen) ? d.geloeschteQuellen : [],
   };
 }
@@ -53,6 +62,8 @@ export function legeAn(daten: Daten, felder: unknown): Eintrag {
     erledigtAm: null,
     quelle: 'manuell',
     quellId: null,
+    bereich: 'eigen',
+    vorschlag: false,
   };
   daten.items.push(eintrag);
   return eintrag;
@@ -64,6 +75,7 @@ export function aendere(daten: Daten, id: string, felder: unknown): Eintrag {
   const e = daten.items.find((x) => x.id === id);
   if (!e) throw new Error('Diesen Eintrag gibt es nicht.');
   const { erledigt, ...rest } = pruefung.aenderung;
+  if (rest.bereich === 'eigen') rest.vorschlag = false;
   Object.assign(e, rest);
   // Uhrzeit gibt es nur zusammen mit einem Datum.
   if (!e.datum) e.uhrzeit = null;
@@ -100,7 +112,7 @@ export function stelleWiederHer(daten: Daten, geloescht: unknown): Eintrag {
   return eintrag;
 }
 
-type Neu = Omit<Eintrag, 'id' | 'erledigt' | 'erstelltAm' | 'erledigtAm'>;
+type Neu = Omit<Eintrag, 'id' | 'erledigt' | 'erstelltAm' | 'erledigtAm' | 'bereich' | 'vorschlag'>;
 
 // Prüft einen Import-Kandidaten. Liefert die bereinigten Felder oder null.
 function pruefeKandidat(k: unknown): Neu | null {
@@ -161,7 +173,16 @@ export function importiere(daten: Daten, inhalt: unknown): ImportErgebnis {
         continue;
       }
       vorhanden.add(schluessel);
-      daten.items.push({ id: crypto.randomUUID(), ...felder, erledigt: false, erstelltAm: jetzt, erledigtAm: null });
+      daten.items.push({
+        id: crypto.randomUUID(),
+        ...felder,
+        erledigt: false,
+        erstelltAm: jetzt,
+        erledigtAm: null,
+        // Neue Funde warten im Reiter „Automatisch“ auf Annehmen oder Ablehnen.
+        bereich: 'automatisch',
+        vorschlag: true,
+      });
       z.neu++;
     }
     return z;

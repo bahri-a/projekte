@@ -55,7 +55,7 @@ Wer die App offen hat, sieht danach oben den Hinweis **„Neue Version verfügba
 
 ## Automatisch erstellte Aufgaben
 
-Die App hat zwei Reiter: **Meine Aufgaben** (selbst erstellt) und **Automatisch**. Im Reiter „Automatisch“ sucht der Knopf **„Aktualisieren“** mit Claude im Second Brain, in den Outlook-Mails dort und in Gmail (letzte 14 Tage) nach neuen Aufgaben und Terminen. Fundstücke erscheinen als Vorschläge, die du annimmst oder ablehnst (beim Ablehnen gibt es 6 Sekunden „Rückgängig“, danach kommt der Fund nie wieder). Angenommene kannst du abhaken, mit dem kleinen X löschen oder in „Meine Aufgaben“ verschieben. Es wird nichts automatisch gelöscht, alles wird nur gelesen. Ein Durchlauf dauert ein bis drei Minuten.
+Die App hat zwei Reiter: **Meine Aufgaben** (selbst erstellt) und **Automatisch**. Im Reiter „Automatisch“ sucht der Knopf **„Aktualisieren“** mit Claude im Second Brain, in den Outlook-Mails dort und in Gmail (letzte 14 Tage) nach neuen Aufgaben und Terminen. Fundstücke erscheinen als Vorschläge, die du annimmst oder ablehnst (beim Ablehnen gibt es 6 Sekunden „Rückgängig“, danach kommt der Fund nie wieder). Angenommene kannst du abhaken, mit dem kleinen X löschen oder in „Meine Aufgaben“ verschieben. Es wird nichts automatisch gelöscht, alles wird nur gelesen. Ein Durchlauf dauert ein bis drei Minuten und läuft mit einem günstigen Modell (Haiku). Nach einem Durchlauf ist „Aktualisieren“ 10 Minuten gesperrt, damit ein Doppelklick nicht doppelt Second Brain, Outlook und Gmail liest.
 
 Das geht nur auf dem MacBook, auf dem der Helfer läuft (`scripts/helfer.mjs`). Er ist nur auf diesem Mac erreichbar, nimmt nur Anfragen der App an und kann nichts anderes, als diese Suche zu starten.
 

@@ -18,6 +18,14 @@ const SECOND_BRAIN = process.env.SECOND_BRAIN;
 const PROJEKT = resolve(import.meta.dirname, '..');
 const DATEI = resolve(PROJEKT, 'data/import-kandidaten.json');
 const HOECHSTDAUER = 10 * 60 * 1000;
+// Reicht für „lesen, einordnen, Titel formulieren“ und ist günstiger als
+// das Standardmodell der Sitzung.
+const MODELL = process.env.HELFER_MODELL ?? 'claude-haiku-4-5-20251001';
+// Verhindert, dass ein Doppelklick oder ein zweiter Aufruf kurz nach dem
+// letzten Lauf Second Brain, Outlook und Gmail noch einmal komplett neu
+// lesen und dabei Tokens verdoppeln lässt.
+const SPERRFRIST = 10 * 60 * 1000;
+let letzterLauf = 0;
 
 // Nur die App selbst darf den Helfer ansprechen.
 const ERLAUBT = new Set(['https://bahri-a.github.io', 'http://localhost:5280', 'http://localhost:5281']);
@@ -44,7 +52,7 @@ function fuehreImportAus() {
   return new Promise((ok, fehler) => {
     const kind = spawn(
       CLAUDE,
-      ['-p', '/projekte-import', '--allowedTools', ...WERKZEUGE, '--disallowedTools', ...GESPERRT, '--add-dir', SECOND_BRAIN, '--output-format', 'json'],
+      ['-p', '/projekte-import', '--model', MODELL, '--allowedTools', ...WERKZEUGE, '--disallowedTools', ...GESPERRT, '--add-dir', SECOND_BRAIN, '--output-format', 'json'],
       { cwd: PROJEKT, stdio: ['ignore', 'pipe', 'pipe'] },
     );
     let ausgabe = '';
@@ -97,6 +105,14 @@ const server = createServer(async (req, res) => {
     antworte(res, 409, { fehler: 'Die Aktualisierung läuft bereits.' });
     return;
   }
+  const seitLetztem = Date.now() - letzterLauf;
+  if (seitLetztem < SPERRFRIST) {
+    const minuten = Math.ceil((SPERRFRIST - seitLetztem) / 60000);
+    antworte(res, 429, {
+      fehler: `Gerade erst aktualisiert. Bitte in etwa ${minuten} Minute${minuten === 1 ? '' : 'n'} erneut versuchen.`,
+    });
+    return;
+  }
 
   laeuft = true;
   console.log(`${new Date().toLocaleString('de-DE')} Aktualisierung gestartet`);
@@ -106,6 +122,7 @@ const server = createServer(async (req, res) => {
     const kandidaten = JSON.parse(await readFile(DATEI, 'utf8'));
     if (!Array.isArray(kandidaten)) throw new Error('Claude hat keine gültige Kandidatenliste geschrieben.');
     console.log(`${kandidaten.length} Kandidaten gefunden`);
+    letzterLauf = Date.now();
     antworte(res, 200, kandidaten);
   } catch (fehler) {
     const meldung = fehler?.code === 'ENOENT'

@@ -57,11 +57,17 @@ Wer die App offen hat, sieht danach oben den Hinweis **„Neue Version verfügba
 
 Der Knopf **„Aktualisieren“** ganz unten sucht mit Claude im Second Brain und in Gmail (letzte 14 Tage) nach neuen Aufgaben, Terminen und Vorhaben und übernimmt sie direkt. Beides wird nur gelesen. Ein Durchlauf dauert ein bis drei Minuten.
 
-Das geht nur auf dem MacBook, auf dem der Helfer läuft (`scripts/helfer.mjs`). Er ist nur auf diesem Mac erreichbar, nimmt nur Anfragen der App an und kann nichts anderes, als diese Suche zu starten. Starten im Terminal (das Fenster muss offen bleiben):
+Das geht nur auf dem MacBook, auf dem der Helfer läuft (`scripts/helfer.mjs`). Er ist nur auf diesem Mac erreichbar, nimmt nur Anfragen der App an und kann nichts anderes, als diese Suche zu starten.
+
+Der Helfer startet bei jeder Anmeldung automatisch (Anmeldeobjekt `~/Library/LaunchAgents/de.projekte.helfer.plist`). Das Protokoll liegt in `~/Library/Logs/projekte-helfer.log`.
+
+Helfer abschalten und entfernen:
 
 ```bash
-SECOND_BRAIN="$HOME/Desktop/Second-Brain" node scripts/helfer.mjs
+launchctl bootout gui/$(id -u)/de.projekte.helfer && rm ~/Library/LaunchAgents/de.projekte.helfer.plist
 ```
+
+Wenn du den Projektordner verschiebst, musst du den Helfer neu einrichten lassen.
 
 ## Daten sichern
 

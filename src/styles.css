@@ -17,6 +17,8 @@
   --akzent-gedaempft: #96683d;
   --schatten: rgb(0 0 0 / 0.12);
   --hinweis-hover: rgb(255 255 255 / 0.08);
+  --knopf-haupt: #1f1f1e;
+  --knopf-haupt-text: #fbfbfa;
 
   --schrift: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
@@ -36,6 +38,8 @@
     --akzent: #d29a60;
     --akzent-gedaempft: #c9955f;
     --schatten: rgb(0 0 0 / 0.4);
+    --knopf-haupt: #3a3a37;
+    --knopf-haupt-text: #e9e8e4;
   }
 }
 
@@ -211,7 +215,6 @@ body {
   margin-left: 6px;
   vertical-align: -1px;
   color: var(--text-leise);
-  opacity: 0.8;
 }
 
 .herkunft svg {
@@ -517,15 +520,14 @@ body {
 }
 
 .knopf-haupt {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--hintergrund);
+  border-color: var(--knopf-haupt);
+  background: var(--knopf-haupt);
+  color: var(--knopf-haupt-text);
 }
 
 .knopf-haupt:hover,
 .knopf-haupt:focus-visible {
-  border-color: var(--text);
-  opacity: 0.88;
+  border-color: var(--text-leise);
 }
 
 .knopf-leise {

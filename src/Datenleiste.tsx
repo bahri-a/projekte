@@ -5,14 +5,9 @@ import { alsDatum } from './zeit';
 
 interface Props {
   onImportiert: () => void;
-  // „Aktualisieren“ gehört zum Reiter „Automatisch“ und steht nur dort.
-  mitAktualisieren: boolean;
 }
 
-// Helfer auf diesem Mac (scripts/helfer.mjs), der /aufgaben-import ausführt.
-const HELFER = 'http://127.0.0.1:3290/aktualisieren';
-
-function importMeldung(z: ImportErgebnis): string {
+export function importMeldung(z: ImportErgebnis): string {
   const uebersprungen = z.vorhanden + z.geloescht + z.ungueltig;
   return (
     `Import: ${z.neu} neu, ${uebersprungen} übersprungen ` +
@@ -20,34 +15,11 @@ function importMeldung(z: ImportErgebnis): string {
   );
 }
 
-// Leise Leiste ganz unten: neue Einträge aus Second Brain und Outlook holen,
-// Datei importieren (Kandidaten oder eine Sicherung) und alle Daten als
+// Leise Leiste ganz unten: Datei importieren (Kandidaten oder eine Sicherung) und alle Daten als
 // Sicherungsdatei herunterladen.
-export default function Datenleiste({ onImportiert, mitAktualisieren }: Props) {
+export default function Datenleiste({ onImportiert }: Props) {
   const datei = useRef<HTMLInputElement>(null);
   const [meldung, setMeldung] = useState<string | null>(null);
-  const [aktualisiert, setAktualisiert] = useState(false);
-
-  async function aktualisieren() {
-    setAktualisiert(true);
-    setMeldung('Wird aktualisiert … Das kann ein bis drei Minuten dauern.');
-    try {
-      let antwort: Response;
-      try {
-        antwort = await fetch(HELFER, { method: 'POST' });
-      } catch {
-        throw new Error('Der Helfer auf diesem Mac ist nicht erreichbar. Aktualisieren geht nur auf dem MacBook.');
-      }
-      const daten = await antwort.json().catch(() => null);
-      if (!antwort.ok) throw new Error(daten?.fehler ?? 'Die Aktualisierung ist fehlgeschlagen.');
-      setMeldung(importMeldung(await importiere(daten)));
-      onImportiert();
-    } catch (fehler) {
-      setMeldung(fehler instanceof Error ? fehler.message : 'Die Aktualisierung ist fehlgeschlagen.');
-    } finally {
-      setAktualisiert(false);
-    }
-  }
 
   async function einlesen(f: File) {
     try {
@@ -75,14 +47,6 @@ export default function Datenleiste({ onImportiert, mitAktualisieren }: Props) {
 
   return (
     <footer className="datenleiste">
-      {mitAktualisieren && (
-        <>
-          <button type="button" className="datenleiste-knopf" disabled={aktualisiert} onClick={() => void aktualisieren()}>
-            Aktualisieren
-          </button>
-          <span className="datenleiste-trenner" aria-hidden="true">·</span>
-        </>
-      )}
       <button type="button" className="datenleiste-knopf" onClick={() => datei.current?.click()}>
         Importieren
       </button>

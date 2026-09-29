@@ -12,6 +12,7 @@ import {
   type NeueFelder,
 } from './api';
 import Aktualisierung from './Aktualisierung';
+import Suche from './Suche';
 import Datenleiste from './Datenleiste';
 import Eingabe from './Eingabe';
 import Erledigte from './Erledigte';
@@ -266,12 +267,13 @@ export default function App() {
       </nav>
       {!automatisch && <Eingabe onHinzufuegen={hinzufuegen} />}
       {fehler && <p className="meldung">{fehler}</p>}
+      {automatisch && <Suche onImportiert={laden} />}
       {automatisch && (
         <Vorschlaege eintraege={vorschlaege} stichtage={t} onAnnehmen={(e) => void annehmen(e)} onAblehnen={ablehnen} />
       )}
       {eintraege && gruppen.length === 0 && (automatisch ? vorschlaege.length === 0 : true) && (
         <p className="meldung">
-          {automatisch ? 'Keine Vorschläge. Mit „Aktualisieren“ nach Neuem suchen.' : 'Nichts geplant.'}
+          {automatisch ? 'Keine Vorschläge. Oben auf „Aktualisieren“ tippen, um nach Neuem zu suchen.' : 'Nichts geplant.'}
         </p>
       )}
       {gruppen.map((g) => (
@@ -307,7 +309,7 @@ export default function App() {
           onVerschieben={automatisch ? verschieben : undefined}
         />
       )}
-      <Datenleiste onImportiert={laden} mitAktualisieren={automatisch} />
+      <Datenleiste onImportiert={laden} />
       <Aktualisierung />
       <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />
     </main>

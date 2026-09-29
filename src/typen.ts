@@ -13,3 +13,8 @@ export interface Eintrag {
   quelle: Quelle;
   quellId: string | null;
 }
+
+// Vorläufige Einträge (noch ohne Antwort des Servers) haben diese id.
+export function istVorlaeufig(e: Eintrag): boolean {
+  return e.id.startsWith('neu-');
+}

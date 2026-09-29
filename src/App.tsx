@@ -11,9 +11,9 @@ import {
 import Eingabe from './Eingabe';
 import Erledigte from './Erledigte';
 import Hinweis, { type HinweisDaten } from './Hinweis';
-import type { Eintrag } from './typen';
+import { istVorlaeufig, type Eintrag } from './typen';
 import { gruppiere, stichtage, type Stichtage } from './zeit';
-import Zeile, { istVorlaeufig } from './Zeile';
+import Zeile from './Zeile';
 
 // Liefert die Stichtage und aktualisiert sie, sobald ein neuer Tag beginnt,
 // damit die Gruppen auch bei offen gelassener Seite stimmen.

@@ -3,7 +3,7 @@ import type { NeueFelder } from './api';
 import Bearbeitung from './Bearbeitung';
 import { ausblenden } from './bewegung';
 import Herkunft from './Herkunft';
-import type { Eintrag } from './typen';
+import { istVorlaeufig, type Eintrag } from './typen';
 import { datumsText, type Gruppe, type Stichtage } from './zeit';
 
 interface Props {
@@ -19,9 +19,28 @@ interface Props {
   onLoeschen: (eintrag: Eintrag) => void;
 }
 
-// Vorläufige Einträge (noch ohne Antwort des Servers) haben diese id.
-export function istVorlaeufig(e: Eintrag): boolean {
-  return e.id.startsWith('neu-');
+// Das Herkunftssymbol bleibt mit dem letzten Wort des Titels zusammen,
+// damit es beim Umbruch nicht allein in eine neue Zeile rutscht.
+function TitelMitHerkunft({ eintrag: e }: { eintrag: Eintrag }) {
+  const trenner = e.titel.lastIndexOf(' ') + 1;
+  // Sehr lange Wörter dürfen weiter umbrechen.
+  if (e.quelle === 'manuell' || e.titel.length - trenner > 24) {
+    return (
+      <>
+        {e.titel}
+        <Herkunft quelle={e.quelle} />
+      </>
+    );
+  }
+  return (
+    <>
+      {e.titel.slice(0, trenner)}
+      <span className="zusammen">
+        {e.titel.slice(trenner)}
+        <Herkunft quelle={e.quelle} />
+      </span>
+    </>
+  );
 }
 
 // Das Abhak-Feld, das nach dem Verschwinden einer Zeile den Fokus bekommt:
@@ -135,8 +154,7 @@ export default function Zeile({
         }}
       >
         <span className="titel">
-          {e.titel}
-          <Herkunft quelle={e.quelle} />
+          <TitelMitHerkunft eintrag={e} />
         </span>
         {e.info && <span className="info">{e.info}</span>}
       </button>

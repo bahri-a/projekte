@@ -41,3 +41,19 @@ export function aendere(id: string, felder: Partial<NeueFelder>): Promise<Eintra
     body: JSON.stringify(felder),
   });
 }
+
+export interface Geloescht {
+  eintrag: Eintrag;
+  index: number;
+}
+
+export function loesche(id: string): Promise<Geloescht> {
+  return anfrage<Geloescht>(`/api/items/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+export function stelleWiederHer(geloescht: Geloescht): Promise<Eintrag> {
+  return anfrage<Eintrag>('/api/items/wiederherstellen', {
+    method: 'POST',
+    body: JSON.stringify(geloescht),
+  });
+}

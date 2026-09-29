@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { aendere, ladeEintraege, legeAn, setzeErledigt, type NeueFelder } from './api';
+import {
+  aendere,
+  ladeEintraege,
+  legeAn,
+  loesche,
+  setzeErledigt,
+  stelleWiederHer,
+  type NeueFelder,
+} from './api';
 import Eingabe from './Eingabe';
 import Erledigte from './Erledigte';
 import Hinweis, { type HinweisDaten } from './Hinweis';
@@ -121,6 +129,33 @@ export default function App() {
     }
   }
 
+  // Löscht sofort (auch auf dem Server), damit der Eintrag nach einem
+  // Neuladen weg ist. „Rückgängig“ legt ihn unverändert wieder an.
+  async function loeschen(eintrag: Eintrag) {
+    geschlossenUm.current = Date.now();
+    setBearbeitetId(null);
+    setEintraege((alt) => (alt ?? []).filter((e) => e.id !== eintrag.id));
+    try {
+      const geloescht = await loesche(eintrag.id);
+      setFehler(null);
+      zeigeHinweis('Gelöscht', () => void wiederherstellen(geloescht.eintrag, geloescht.index));
+    } catch {
+      setEintraege((alt) => [...(alt ?? []), eintrag]);
+      setFehler('Der Eintrag konnte nicht gelöscht werden.');
+    }
+  }
+
+  async function wiederherstellen(eintrag: Eintrag, index: number) {
+    setEintraege((alt) => ((alt ?? []).some((e) => e.id === eintrag.id) ? alt : [...(alt ?? []), eintrag]));
+    try {
+      await stelleWiederHer({ eintrag, index });
+      setFehler(null);
+    } catch {
+      setEintraege((alt) => (alt ?? []).filter((e) => e.id !== eintrag.id));
+      setFehler('Der Eintrag konnte nicht wiederhergestellt werden.');
+    }
+  }
+
   function abhaken(eintrag: Eintrag) {
     void setzeStatus(eintrag, true);
     zeigeHinweis('Erledigt', () => void setzeStatus(eintrag, false));
@@ -147,6 +182,7 @@ export default function App() {
                 bearbeitet={bearbeitetId === e.id}
                 onBearbeiten={bearbeiten}
                 onSpeichern={(e, felder) => void speichern(e, felder)}
+                onLoeschen={(e) => void loeschen(e)}
               />
             ))}
           </ul>
@@ -160,6 +196,7 @@ export default function App() {
           bearbeitetId={bearbeitetId}
           onBearbeiten={bearbeiten}
           onSpeichern={(e, felder) => void speichern(e, felder)}
+          onLoeschen={(e) => void loeschen(e)}
         />
       )}
       <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />

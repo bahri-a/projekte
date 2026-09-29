@@ -28,6 +28,11 @@ export interface Daten {
   geloeschteQuellen: string[];
 }
 
+// Schlüssel, unter dem ein importierter Eintrag in geloeschteQuellen steht.
+export function quellSchluessel(e: Pick<Eintrag, 'quelle' | 'quellId'>): string | null {
+  return e.quellId && e.quelle !== 'manuell' ? `${e.quelle}:${e.quellId}` : null;
+}
+
 function leer(): Daten {
   return { version: 1, items: [], geloeschteQuellen: [] };
 }

@@ -6,10 +6,11 @@ interface Props {
   eintrag: Eintrag;
   onSpeichern: (felder: NeueFelder) => void;
   onAbbrechen: () => void;
+  onLoeschen: () => void;
 }
 
 // Bearbeitung eines Eintrags an seiner Stelle in der Liste.
-export default function Bearbeitung({ eintrag, onSpeichern, onAbbrechen }: Props) {
+export default function Bearbeitung({ eintrag, onSpeichern, onAbbrechen, onLoeschen }: Props) {
   const [titel, setTitel] = useState(eintrag.titel);
   const [info, setInfo] = useState(eintrag.info);
   const [datum, setDatum] = useState(eintrag.datum ?? '');
@@ -124,6 +125,16 @@ export default function Bearbeitung({ eintrag, onSpeichern, onAbbrechen }: Props
         </button>
         <button type="button" className="knopf" onClick={onAbbrechen}>
           Abbrechen
+        </button>
+        <button
+          type="button"
+          className="knopf-leise"
+          onClick={(ereignis) => {
+            if (ereignis.detail > 1) return;
+            onLoeschen();
+          }}
+        >
+          Löschen
         </button>
       </div>
     </form>

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import express, { type ErrorRequestHandler } from 'express';
-import { aendereDaten, leseDaten, stelleDateiSicher, type Eintrag } from './daten';
-import { pruefeAenderung, pruefeNeuenEintrag } from './pruefung';
+import { aendereDaten, leseDaten, quellSchluessel, stelleDateiSicher, type Eintrag } from './daten';
+import { pruefeAenderung, pruefeNeuenEintrag, pruefeWiederherstellung } from './pruefung';
 
 const port = Number(process.env.PORT ?? 3280);
 // Relativ zum Projektordner, unabhängig davon, von wo der Server gestartet wird.
@@ -66,6 +66,52 @@ app.patch('/api/items/:id', async (req, res) => {
     return;
   }
   res.json(eintrag);
+});
+
+// Endgültiges Löschen. Importierte Einträge werden in geloeschteQuellen
+// vermerkt, damit der Import sie nie wieder anlegt. Die Antwort enthält den
+// Eintrag und seine Position für ein späteres „Rückgängig“.
+app.delete('/api/items/:id', async (req, res) => {
+  const ergebnis = await aendereDaten(dataPath, (daten) => {
+    const index = daten.items.findIndex((x) => x.id === req.params.id);
+    if (index < 0) return null;
+    const [eintrag] = daten.items.splice(index, 1);
+    const schluessel = quellSchluessel(eintrag);
+    if (schluessel && !daten.geloeschteQuellen.includes(schluessel)) {
+      daten.geloeschteQuellen.push(schluessel);
+    }
+    return { eintrag, index };
+  });
+  if (!ergebnis) {
+    res.status(404).json({ fehler: 'Diesen Eintrag gibt es nicht.' });
+    return;
+  }
+  res.json(ergebnis);
+});
+
+// „Rückgängig“ nach dem Löschen: legt den Eintrag unverändert (gleiche id)
+// an seiner alten Position wieder an und nimmt ihn aus geloeschteQuellen.
+app.post('/api/items/wiederherstellen', async (req, res) => {
+  const pruefung = pruefeWiederherstellung(req.body);
+  if (!pruefung.ok) {
+    res.status(400).json({ fehler: pruefung.fehler });
+    return;
+  }
+  const { eintrag, index } = pruefung;
+  const ok = await aendereDaten(dataPath, (daten) => {
+    if (daten.items.some((x) => x.id === eintrag.id)) return false;
+    daten.items.splice(Math.min(index, daten.items.length), 0, eintrag);
+    const schluessel = quellSchluessel(eintrag);
+    if (schluessel) {
+      daten.geloeschteQuellen = daten.geloeschteQuellen.filter((q) => q !== schluessel);
+    }
+    return true;
+  });
+  if (!ok) {
+    res.status(409).json({ fehler: 'Diesen Eintrag gibt es bereits.' });
+    return;
+  }
+  res.status(201).json(eintrag);
 });
 
 app.use('/api', (_req, res) => {

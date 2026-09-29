@@ -1,5 +1,6 @@
-// Prüft Eingaben für neue Einträge. Liefert entweder die bereinigten Felder
-// oder eine deutsche Fehlermeldung.
+// Prüft Eingaben für neue, geänderte und wiederhergestellte Einträge. Liefert
+// entweder die bereinigten Werte oder eine deutsche Fehlermeldung.
+import type { Eintrag } from './daten';
 
 export interface NeueFelder {
   titel: string;
@@ -132,4 +133,56 @@ export function pruefeAenderung(body: unknown): Aenderungsergebnis {
   }
 
   return { ok: true, aenderung };
+}
+
+const QUELLEN = ['manuell', 'second-brain', 'email'];
+
+function istZeitpunkt(wert: unknown): wert is string {
+  return typeof wert === 'string' && !Number.isNaN(Date.parse(wert));
+}
+
+export type Wiederherstellung = { ok: true; eintrag: Eintrag; index: number } | { ok: false; fehler: string };
+
+// Prüft einen gelöschten Eintrag, der unverändert zurückkommen soll
+// (Rückgängig nach dem Löschen): { eintrag: {...}, index }.
+export function pruefeWiederherstellung(body: unknown): Wiederherstellung {
+  const b = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>;
+  const e = b.eintrag as Record<string, unknown> | undefined;
+  const falsch = { ok: false as const, fehler: 'Der Eintrag kann nicht wiederhergestellt werden.' };
+  if (typeof e !== 'object' || e === null) return falsch;
+  const datumOk = e.datum === null || (typeof e.datum === 'string' && istGueltigesDatum(e.datum));
+  const uhrzeitOk =
+    e.uhrzeit === null || (typeof e.uhrzeit === 'string' && istGueltigeUhrzeit(e.uhrzeit) && e.datum !== null);
+  if (
+    typeof e.id !== 'string' || e.id === '' ||
+    typeof e.titel !== 'string' || e.titel.trim() === '' ||
+    typeof e.info !== 'string' ||
+    !datumOk || !uhrzeitOk ||
+    typeof e.wichtig !== 'boolean' ||
+    typeof e.erledigt !== 'boolean' ||
+    !istZeitpunkt(e.erstelltAm) ||
+    !(e.erledigtAm === null || istZeitpunkt(e.erledigtAm)) ||
+    typeof e.quelle !== 'string' || !QUELLEN.includes(e.quelle) ||
+    !(e.quellId === null || typeof e.quellId === 'string')
+  ) {
+    return falsch;
+  }
+  const index = typeof b.index === 'number' && Number.isInteger(b.index) && b.index >= 0 ? b.index : Infinity;
+  return {
+    ok: true,
+    index,
+    eintrag: {
+      id: e.id,
+      titel: e.titel,
+      info: e.info,
+      datum: e.datum as string | null,
+      uhrzeit: e.uhrzeit as string | null,
+      wichtig: e.wichtig,
+      erledigt: e.erledigt,
+      erstelltAm: e.erstelltAm,
+      erledigtAm: e.erledigtAm as string | null,
+      quelle: e.quelle as Eintrag['quelle'],
+      quellId: e.quellId as string | null,
+    },
+  };
 }

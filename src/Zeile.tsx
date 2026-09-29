@@ -16,6 +16,7 @@ interface Props {
   bearbeitet: boolean;
   onBearbeiten: (eintrag: Eintrag | null) => void;
   onSpeichern: (eintrag: Eintrag, felder: NeueFelder) => void;
+  onLoeschen: (eintrag: Eintrag) => void;
 }
 
 // Vorläufige Einträge (noch ohne Antwort des Servers) haben diese id.
@@ -23,11 +24,14 @@ export function istVorlaeufig(e: Eintrag): boolean {
   return e.id.startsWith('neu-');
 }
 
-// Das Abhak-Feld, das nach dem Verschwinden dieser Zeile den Fokus bekommt.
-function naechstesFeld(feld: HTMLElement): HTMLElement | null {
+// Das Abhak-Feld, das nach dem Verschwinden einer Zeile den Fokus bekommt:
+// das der nächsten Zeile, sonst das der vorigen.
+function naechstesFeld(ab: HTMLElement | null): HTMLElement | null {
+  if (!ab) return null;
   const alle = [...document.querySelectorAll<HTMLElement>('.abhaken')];
-  const i = alle.indexOf(feld);
-  return alle[i + 1] ?? alle[i - 1] ?? null;
+  const danach = alle.find((f) => ab.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_FOLLOWING && !ab.contains(f));
+  const davor = alle.filter((f) => ab.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_PRECEDING).pop();
+  return danach ?? davor ?? null;
 }
 
 export default function Zeile({
@@ -38,6 +42,7 @@ export default function Zeile({
   bearbeitet,
   onBearbeiten,
   onSpeichern,
+  onLoeschen,
 }: Props) {
   const zeile = useRef<HTMLLIElement>(null);
   const [geht, setGeht] = useState(false);
@@ -65,10 +70,24 @@ export default function Zeile({
     );
   }
 
+  async function loeschen() {
+    if (geht) return;
+    const fokusWeiter = naechstesFeld(zeile.current);
+    setGeht(true);
+    await ausblenden(zeile.current);
+    onLoeschen(e);
+    if (fokusWeiter) setTimeout(() => fokusWeiter.focus());
+  }
+
   if (bearbeitet) {
     return (
-      <li className="eintrag eintrag-bearbeiten" data-eintrag={e.id}>
-        <Bearbeitung eintrag={e} onSpeichern={schliessen} onAbbrechen={() => schliessen()} />
+      <li ref={zeile} className={`eintrag eintrag-bearbeiten${geht ? ' geht' : ''}`} data-eintrag={e.id}>
+        <Bearbeitung
+          eintrag={e}
+          onSpeichern={schliessen}
+          onAbbrechen={() => schliessen()}
+          onLoeschen={loeschen}
+        />
       </li>
     );
   }

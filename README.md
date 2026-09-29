@@ -1,0 +1,63 @@
+# Projekte
+
+Eine ruhige App, die auf einen Blick zeigt, was jetzt und bald wichtig ist: Termine, Aufgaben und Vorhaben in einer einzigen, nach Zeit geordneten Liste.
+
+**Online:** https://bahri-a.github.io/projekte/
+
+Die App läuft komplett im Browser und hat weder Server noch Konto. Deine Einträge bleiben **nur in deinem Browser** auf diesem Mac und werden nirgendwohin geschickt. Die App funktioniert auch offline.
+
+## Lokal starten
+
+Einmalig die Abhängigkeiten installieren:
+
+```bash
+npm install
+```
+
+Dann die App starten:
+
+```bash
+npm run dev
+```
+
+Anschließend http://localhost:5280 öffnen. Beenden kannst du sie im Terminal mit `Ctrl + C`.
+
+Weitere Befehle:
+
+| Zweck | Befehl |
+|---|---|
+| Tests | `npm test` |
+| Typprüfung | `npm run typecheck` |
+| Produktions-Build | `npm run build` |
+| Testdateien erzeugen (`data/*.test.json`) | `npm run testdata:reset` |
+| Mit Testdaten ausprobieren (eigener Speicher, getrennt von deinen Daten) | `npm run dev:test` → http://localhost:5281, dann `data/items.test.json` über „Importieren“ laden |
+
+Hinweis: Jede Adresse hat ihren eigenen Speicher. Die Einträge unter `localhost:5280`, `localhost:5281` und der Online-Adresse sind also voneinander getrennt.
+
+## Veröffentlichen
+
+Jeder `git push` auf `main` veröffentlicht die App automatisch:
+
+```bash
+git push
+```
+
+GitHub führt dann die Tests aus, baut die App und stellt sie online. Das dauert etwa ein bis zwei Minuten. Den Fortschritt siehst du im Repo auf GitHub unter **Actions**. Ein grüner Haken bedeutet „online“, ein rotes Kreuz bedeutet, dass etwas fehlgeschlagen ist und die alte Version online bleibt.
+
+Wer die App offen hat, sieht danach oben den Hinweis **„Neue Version verfügbar · Neu laden“**. Die App lädt nie von selbst neu.
+
+## In Chrome installieren
+
+1. https://bahri-a.github.io/projekte/ in Chrome öffnen.
+2. In der Adressleiste rechts auf das Symbol **„Installieren“** klicken (ein Bildschirm mit Pfeil). Alternativ gehst du über das Menü **⋮** → **Streamen, speichern und teilen** → **Seite als App installieren…**
+3. Die App öffnet sich in einem eigenen Fenster.
+4. Rechtsklick auf das Symbol im Dock → **Optionen** → **Im Dock behalten**.
+
+## Daten sichern
+
+Deine Daten liegen nur im Browser. Wenn du in Chrome „Browserdaten löschen“ (Cookies und Websitedaten) ausführst oder die App deinstallierst, sind sie weg. Mach deshalb regelmäßig eine Sicherung:
+
+- **Sichern:** Ganz unten in der App auf **„Sichern“** klicken. Chrome lädt die Datei `projekte-sicherung-JJJJ-MM-TT.json` in deinen Download-Ordner.
+- **Wiederherstellen:** Unten auf **„Importieren“** klicken und die Sicherungsdatei auswählen. Einträge, die schon da sind, bleiben unverändert, und fehlende kommen dazu.
+
+Über **„Importieren“** lädst du auch neue Import-Kandidaten (eine JSON-Liste mit `titel`, `quelle`, `quellId` usw.). Dabei gelten folgende Regeln: Bereits vorhandene Einträge werden übersprungen, und einmal gelöschte Einträge werden nie wieder importiert.

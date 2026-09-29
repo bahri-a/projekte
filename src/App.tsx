@@ -9,6 +9,7 @@ import {
   stelleWiederHer,
   type NeueFelder,
 } from './api';
+import Aktualisierung from './Aktualisierung';
 import Datenleiste from './Datenleiste';
 import Eingabe from './Eingabe';
 import Erledigte from './Erledigte';
@@ -207,6 +208,7 @@ export default function App() {
         />
       )}
       <Datenleiste onImportiert={laden} />
+      <Aktualisierung />
       <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />
     </main>
   );

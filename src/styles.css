@@ -651,3 +651,16 @@ body {
   flex-basis: 100%;
   margin: 4px 0 0;
 }
+
+/* Hinweis auf eine neue Version, oben, bleibt bis zum Klick stehen */
+.aktualisierung-bereich {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 16px;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}

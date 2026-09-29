@@ -16,3 +16,9 @@ data/*.test.json
 
 # Playwright-MCP-Ausgaben
 .playwright-mcp/
+
+# Interne Arbeitsdateien, nicht veröffentlichen
+CLAUDE.md
+PROGRESS.md
+docs/
+.claude/

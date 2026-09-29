@@ -1,7 +1,8 @@
 // Kleiner Helfer für den Knopf „Aktualisieren“ in der App.
 // Läuft nur auf diesem Mac (127.0.0.1) und kann genau eine Sache: neue
-// Aufgaben, Termine und Fristen aus Second Brain, Outlook-Mails und Gmail
-// suchen lassen und als Kandidaten an die App zurückgeben. Alles nur lesend.
+// Aufgaben, Termine und Fristen aus Second Brain und Outlook-Mails suchen
+// lassen und als Kandidaten an die App zurückgeben. Alles nur lesend.
+// Gmail wird bewusst nicht mehr abgefragt.
 //
 //   node scripts/helfer.mjs
 //
@@ -13,10 +14,8 @@
 //   Trefferzeilen (siehe vorfilter.mjs) und neue Mails, gekürzt, in einem
 //   einzigen Aufruf ohne Werkzeuge an Claude. Ist nichts neu, gibt es keinen
 //   Aufruf.
-// - Gmail geht nur über den Konnektor. Claude bekommt dafür nur die drei
-//   lesenden Gmail-Werkzeuge und sucht nur ab dem letzten Lauf.
-// - Beide Aufrufe ohne Denkphase, ohne Claude-Code-Systemanweisung und ohne
-//   die übrigen Konnektoren.
+// - Der Aufruf läuft ohne Denkphase, ohne Claude-Code-Systemanweisung, ohne
+//   Werkzeuge und ohne Konnektoren.
 // - Was einmal an Claude ging, steht in data/helfer-stand.json und kommt nie
 //   wieder dran.
 import { spawn } from 'node:child_process';
@@ -38,7 +37,7 @@ const HOECHSTDAUER = 10 * 60 * 1000;
 // Reicht für „einordnen und Titel formulieren“ und ist günstig.
 const MODELL = process.env.HELFER_MODELL ?? 'claude-haiku-4-5-20251001';
 // Verhindert, dass ein Doppelklick kurz nach dem letzten Lauf gleich wieder
-// Gmail abfragt.
+// einen Aufruf auslöst.
 const SPERRFRIST = 10 * 60 * 1000;
 let letzterLauf = 0;
 
@@ -46,28 +45,6 @@ let letzterLauf = 0;
 const ERLAUBT = new Set(['https://bahri-a.github.io', 'http://localhost:5280', 'http://localhost:5281']);
 
 const OHNE_DENKEN = JSON.stringify({ alwaysThinkingEnabled: false });
-
-// Für Gmail: nur die lesenden Werkzeuge. Alle anderen Konnektoren und alle
-// schreibenden Gmail-Werkzeuge werden gar nicht erst geladen (spart rund
-// 25.000 Tokens pro Aufruf). Kommt ein neues Gmail-Werkzeug dazu, ist es
-// trotzdem nicht erlaubt, weil nur GMAIL_LESEN in --allowedTools steht.
-const GMAIL = 'mcp__claude_ai_Gmail__';
-const GMAIL_LESEN = ['search_threads', 'get_thread', 'get_message'].map((w) => GMAIL + w);
-const GMAIL_WEG = [
-  'mcp__claude_ai_Supabase',
-  'mcp__claude_ai_Vercel',
-  'mcp__claude_ai_Notion',
-  'mcp__claude_ai_Claude_Docs',
-  'mcp__claude_ai_Google_Calendar',
-  'mcp__claude_ai_Google_Drive',
-  ...[
-    'apply_sensitive_message_label', 'apply_sensitive_thread_label', 'create_draft', 'create_label',
-    'delete_draft', 'delete_label', 'forward', 'get_draft', 'label_message', 'label_thread', 'list_drafts',
-    'list_labels', 'mark_message_spam', 'mark_thread_spam', 'reply', 'send_message', 'trash_message',
-    'trash_thread', 'unlabel_message', 'unlabel_thread', 'unmark_message_spam', 'unmark_thread_spam',
-    'untrash_message', 'untrash_thread', 'update_draft', 'update_label', 'update_message_labels',
-  ].map((w) => GMAIL + w),
-];
 
 const FELDER = `Antworte nur mit einem JSON-Array, ohne Text davor oder danach. Nichts gefunden: []
 Jedes Element hat genau diese Felder:
@@ -91,24 +68,14 @@ ${FELDER}
 - quellId: bei Mails nur die Kennung aus dem Kopf (z. B. "M2"). Bei Notizen die Kennung aus dem Kopf, dann „#“ und ein kurzes Stichwort aus dem Inhalt in Kleinbuchstaben mit Bindestrichen (z. B. "N3#steuererklaerung").`;
 }
 
-function anweisungGmail(heute) {
-  return `Du suchst in Gmail nach Einträgen für eine persönliche Aufgabenliste. Heute ist ${heute}.
-Gmail nur lesen. Du hast nur search_threads, get_thread und get_message.
-Vorgehen: Einmal search_threads mit der vorgegebenen Abfrage. Entscheide zuerst anhand von Absender, Betreff und Vorschau. Öffne mit get_thread nur Threads, die nach Termin, Frist oder Aufgabe aussehen, höchstens 8. Gibt es keine Treffer, antworte sofort mit [].
-${AUSWAHL}
-${FELDER}
-- quelle: immer "email".
-- quellId: die Gmail-Message-ID der Mail.`;
-}
-
 // Startet Claude einmal und gibt die gefundene Liste zurück.
-function frageClaude(name, anweisung, eingabe, werkzeuge) {
+function frageClaude(name, anweisung, eingabe) {
   return new Promise((ok, fehler) => {
     const kind = spawn(
       CLAUDE,
       [
         '-p', '--model', MODELL, '--output-format', 'json', '--settings', OHNE_DENKEN,
-        '--system-prompt', anweisung, '--tools', '', ...werkzeuge,
+        '--system-prompt', anweisung, '--tools', '', '--strict-mcp-config',
       ],
       { cwd: LEER, stdio: ['pipe', 'pipe', 'pipe'] },
     );
@@ -126,7 +93,7 @@ function frageClaude(name, anweisung, eingabe, werkzeuge) {
       } catch {}
       if (ergebnis?.usage) protokolliereVerbrauch(name, ergebnis);
       if (code !== 0 || !ergebnis || ergebnis.is_error) {
-        fehler(new Error('Die Suche im Second Brain und in Gmail ist fehlgeschlagen.'));
+        fehler(new Error('Die Suche im Second Brain und in den Mails ist fehlgeschlagen.'));
         return;
       }
       const text = String(ergebnis.result ?? '');
@@ -156,7 +123,6 @@ async function leseStand() {
     return {
       zeilen: new Set(s.zeilen ?? []),
       outlook: new Set(s.outlook ?? []),
-      gmailSeit: typeof s.gmailSeit === 'number' ? s.gmailSeit : null,
     };
   } catch {
     return null;
@@ -231,38 +197,28 @@ function alsTag(d) {
 }
 
 async function aktualisiere() {
-  const beginn = Date.now();
   const heute = new Date();
   let stand = await leseStand();
   const erstlauf = stand === null;
-  stand ??= { zeilen: new Set(), outlook: new Set(), gmailSeit: null };
+  stand ??= { zeilen: new Set(), outlook: new Set() };
   const lokal = await sammleLokal(stand, heute);
 
+  let gefunden = [];
   if (erstlauf) {
-    // Beim ersten Lauf ist alles Bisherige schon in der App (aus der Zeit vor
-    // dem Stand). Es wird nur als gesehen vermerkt und kostet nichts. Gmail
-    // sucht einen Tag zurück; gleiche Mails erkennt die App an der Message-ID.
+    // Beim ersten Lauf ist alles Bisherige schon in der App. Es wird nur als
+    // gesehen vermerkt und kostet nichts.
     console.log(`  Erstlauf: ${lokal.neueZeilen.length} Notizzeilen und ${lokal.neueMails.length} Outlook-Mails als bekannt vermerkt`);
-    stand.gmailSeit = beginn - 24 * 60 * 60 * 1000;
+  } else if (lokal.text) {
+    gefunden = await frageClaude('Notizen/Outlook', anweisungLokal(alsTag(heute)), lokal.text);
+  } else {
+    console.log('  Nichts Neues, kein Aufruf');
   }
-  const gmailSeit = stand.gmailSeit ?? beginn - 14 * 24 * 60 * 60 * 1000;
-  const abfrage = `after:${Math.floor(gmailSeit / 1000)} -category:promotions -category:social -category:forums`;
+  const kandidaten = verweiseAufloesen(gefunden, lokal.verweise);
 
-  const [ausNotizen, ausGmail] = await Promise.all([
-    !erstlauf && lokal.text
-      ? frageClaude('Notizen/Outlook', anweisungLokal(alsTag(heute)), lokal.text, ['--strict-mcp-config'])
-      : (console.log('  Notizen/Outlook: nichts Neues, kein Aufruf'), []),
-    frageClaude('Gmail', anweisungGmail(alsTag(heute)), `Abfrage für search_threads: ${abfrage}`, [
-      '--max-turns', '15', '--allowedTools', ...GMAIL_LESEN, '--disallowedTools', ...GMAIL_WEG,
-    ]),
-  ]);
-  const kandidaten = [...verweiseAufloesen(ausNotizen, lokal.verweise), ...ausGmail.map((k) => ({ ...k, quelle: 'email' }))];
-
-  // Erst nach Erfolg beider Teile vermerken, sonst wiederholt der nächste Lauf.
+  // Erst nach Erfolg vermerken, sonst wiederholt der nächste Lauf.
   for (const k of lokal.neueZeilen) stand.zeilen.add(k);
   for (const id of lokal.neueMails) stand.outlook.add(id);
-  stand.gmailSeit = beginn;
-  await schreibeJson(STAND, { version: 1, zeilen: [...stand.zeilen], outlook: [...stand.outlook], gmailSeit: stand.gmailSeit });
+  await schreibeJson(STAND, { version: 1, zeilen: [...stand.zeilen], outlook: [...stand.outlook] });
   await schreibeJson(DATEI, kandidaten);
   return kandidaten;
 }

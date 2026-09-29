@@ -664,3 +664,9 @@ body {
   padding: 0 16px;
   pointer-events: none;
 }
+
+.datenleiste-knopf:disabled {
+  opacity: 0.5;
+  cursor: default;
+  text-decoration: none;
+}

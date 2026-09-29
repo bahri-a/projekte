@@ -53,6 +53,16 @@ Wer die App offen hat, sieht danach oben den Hinweis **„Neue Version verfügba
 3. Die App öffnet sich in einem eigenen Fenster.
 4. Rechtsklick auf das Symbol im Dock → **Optionen** → **Im Dock behalten**.
 
+## Aktualisieren (Second Brain und Gmail)
+
+Der Knopf **„Aktualisieren“** ganz unten sucht mit Claude im Second Brain und in Gmail (letzte 14 Tage) nach neuen Aufgaben, Terminen und Vorhaben und übernimmt sie direkt. Beides wird nur gelesen. Ein Durchlauf dauert ein bis drei Minuten.
+
+Das geht nur auf dem MacBook, auf dem der Helfer läuft (`scripts/helfer.mjs`). Er ist nur auf diesem Mac erreichbar, nimmt nur Anfragen der App an und kann nichts anderes, als diese Suche zu starten. Starten im Terminal (das Fenster muss offen bleiben):
+
+```bash
+SECOND_BRAIN="$HOME/Desktop/Second-Brain" node scripts/helfer.mjs
+```
+
 ## Daten sichern
 
 Deine Daten liegen nur im Browser. Wenn du in Chrome „Browserdaten löschen“ (Cookies und Websitedaten) ausführst oder die App deinstallierst, sind sie weg. Mach deshalb regelmäßig eine Sicherung:

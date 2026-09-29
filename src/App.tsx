@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   aendere,
+  bitteUmDauerhaftenSpeicher,
   ladeEintraege,
   legeAn,
   loesche,
@@ -8,6 +9,7 @@ import {
   stelleWiederHer,
   type NeueFelder,
 } from './api';
+import Datenleiste from './Datenleiste';
 import Eingabe from './Eingabe';
 import Erledigte from './Erledigte';
 import Hinweis, { type HinweisDaten } from './Hinweis';
@@ -42,11 +44,16 @@ export default function App() {
   const aenderungsNr = useRef(new Map<string, number>());
   const t = useStichtage();
 
-  useEffect(() => {
+  const laden = useCallback(() => {
     ladeEintraege()
       .then(setEintraege)
       .catch(() => setFehler('Die Einträge konnten nicht geladen werden.'));
   }, []);
+
+  useEffect(() => {
+    laden();
+    bitteUmDauerhaftenSpeicher();
+  }, [laden]);
 
   function ersetze(neu: Eintrag) {
     setEintraege((alt) => (alt ?? []).map((e) => (e.id === neu.id ? neu : e)));
@@ -199,6 +206,7 @@ export default function App() {
           onLoeschen={(e) => void loeschen(e)}
         />
       )}
+      <Datenleiste onImportiert={laden} />
       <Hinweis hinweis={hinweis} onSchliessen={schliesseHinweis} />
     </main>
   );

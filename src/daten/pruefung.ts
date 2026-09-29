@@ -1,6 +1,6 @@
 // Prüft Eingaben für neue, geänderte und wiederhergestellte Einträge. Liefert
 // entweder die bereinigten Werte oder eine deutsche Fehlermeldung.
-import type { Eintrag } from './daten';
+import type { Eintrag } from '../typen';
 
 export interface NeueFelder {
   titel: string;

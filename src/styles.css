@@ -613,3 +613,41 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* Importieren und Sichern */
+.datenleiste {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 64px;
+  padding-bottom: 96px;
+  color: var(--text-leise);
+  font-size: 13px;
+}
+
+.datenleiste-knopf {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--text-leise);
+  font: inherit;
+  cursor: pointer;
+}
+
+.datenleiste-knopf:hover,
+.datenleiste-knopf:focus-visible {
+  color: var(--text);
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.datenleiste-trenner {
+  opacity: 0.6;
+}
+
+.datenleiste-meldung {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+}

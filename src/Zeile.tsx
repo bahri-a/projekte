@@ -44,7 +44,9 @@ export default function Zeile({
   const vorlaeufig = istVorlaeufig(e);
 
   async function umschalten(ereignis: MouseEvent<HTMLButtonElement>) {
-    if (geht || vorlaeufig) return;
+    // Der zweite Klick eines Doppelklicks zählt nicht, auch wenn er nach dem
+    // Nachrücken der Liste ein anderes Abhak-Feld trifft.
+    if (geht || vorlaeufig || ereignis.detail > 1) return;
     const feld = ereignis.currentTarget;
     const fokusWeiter = document.activeElement === feld ? naechstesFeld(feld) : null;
     setGeht(true);
@@ -106,7 +108,12 @@ export default function Zeile({
         className="inhalt"
         title="Bearbeiten"
         aria-label={`Bearbeiten: ${e.titel}`}
-        onClick={() => onBearbeiten(e)}
+        onClick={(ereignis) => {
+          // Der zweite Klick eines Doppelklicks (z. B. auf „Speichern“, nach
+          // dem die Liste nachrückt) öffnet nichts.
+          if (ereignis.detail > 1) return;
+          onBearbeiten(e);
+        }}
       >
         <span className="titel">
           {e.titel}

@@ -92,13 +92,24 @@ export default function App() {
     }
   }
 
+  // Zeitpunkt, zu dem zuletzt eine Bearbeitung geschlossen wurde. Ein Klick
+  // kurz danach gilt noch dem Schließen und öffnet keinen anderen Eintrag.
+  const geschlossenUm = useRef(0);
+
   function bearbeiten(eintrag: Eintrag | null) {
-    setBearbeitetId(eintrag && !istVorlaeufig(eintrag) ? eintrag.id : null);
+    if (!eintrag) {
+      geschlossenUm.current = Date.now();
+      setBearbeitetId(null);
+      return;
+    }
+    if (istVorlaeufig(eintrag) || Date.now() - geschlossenUm.current < 500) return;
+    setBearbeitetId(eintrag.id);
   }
 
   // Übernimmt die Änderung sofort und speichert sie; quelle und quellId
   // bleiben unverändert.
   async function speichern(eintrag: Eintrag, felder: NeueFelder) {
+    geschlossenUm.current = Date.now();
     setBearbeitetId(null);
     ersetze({ ...eintrag, ...felder });
     try {

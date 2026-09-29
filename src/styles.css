@@ -421,6 +421,38 @@ body {
   }
 }
 
+/* Schmale Fensterbreite */
+@media (max-width: 480px) {
+  .seite {
+    padding: 32px 16px 96px;
+  }
+
+  .eintrag {
+    column-gap: 12px;
+  }
+
+  /* Sehr lange Datumsangaben brechen um, statt den Titel zu verdrängen. */
+  .datum {
+    max-width: 8.5em;
+    white-space: normal;
+    text-align: right;
+  }
+
+  /* 16 px verhindert das automatische Hineinzoomen mobiler Browser. */
+  .eingabe-titel,
+  .feld {
+    font-size: 16px;
+  }
+
+  .eintrag-bearbeiten {
+    padding-left: 0;
+  }
+
+  .wichtig-punkt {
+    left: -11px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

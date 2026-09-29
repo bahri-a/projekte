@@ -146,7 +146,7 @@ export interface ImportErgebnis {
 }
 
 // Importiert eine Datei. Zwei Formate:
-// - Liste von Kandidaten (aus /projekte-import): gleiche quelle + quellId →
+// - Liste von Kandidaten (aus /aufgaben-import): gleiche quelle + quellId →
 //   überspringen, Einträge aus geloeschteQuellen → überspringen.
 // - Sicherung { version, items, geloeschteQuellen }: Einträge mit neuer id
 //   kommen dazu, vorhandene bleiben unverändert.

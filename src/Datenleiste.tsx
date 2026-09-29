@@ -9,7 +9,7 @@ interface Props {
   mitAktualisieren: boolean;
 }
 
-// Helfer auf diesem Mac (scripts/helfer.mjs), der /projekte-import ausführt.
+// Helfer auf diesem Mac (scripts/helfer.mjs), der /aufgaben-import ausführt.
 const HELFER = 'http://127.0.0.1:3290/aktualisieren';
 
 function importMeldung(z: ImportErgebnis): string {
@@ -20,7 +20,7 @@ function importMeldung(z: ImportErgebnis): string {
   );
 }
 
-// Leise Leiste ganz unten: neue Einträge aus Second Brain und Gmail holen,
+// Leise Leiste ganz unten: neue Einträge aus Second Brain und Outlook holen,
 // Datei importieren (Kandidaten oder eine Sicherung) und alle Daten als
 // Sicherungsdatei herunterladen.
 export default function Datenleiste({ onImportiert, mitAktualisieren }: Props) {

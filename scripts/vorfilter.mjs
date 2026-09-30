@@ -134,3 +134,40 @@ export function verweiseAufloesen(kandidaten, verweise) {
   }
   return ergebnis;
 }
+
+// Für Tagesplan („Vorschläge“): höchstens so viele Titel pro Aufruf, jeder gekürzt.
+export const MAX_KURZTITEL = 40;
+const MAX_TITELLAENGE = 200;
+
+// Prüft die Anfrage { titel: [...] }: nur Texte, ohne Doppelte, begrenzt.
+// Liefert null, wenn die Anfrage nicht passt.
+export function kurztitelAnfrage(daten) {
+  if (!daten || !Array.isArray(daten.titel)) return null;
+  const titel = [...new Set(daten.titel.filter((t) => typeof t === 'string' && t.trim()))];
+  return titel.slice(0, MAX_KURZTITEL);
+}
+
+// Eingabe für Claude: eine nummerierte Zeile pro Titel, lange Titel gekürzt.
+export function kurztitelEingabe(titel) {
+  return titel.map((t, i) => `${i + 1}. ${kuerze(t.replace(/\s+/g, ' ').trim(), MAX_TITELLAENGE)}`).join('\n');
+}
+
+// Liest Claudes Antwort (JSON-Array mit Kurztiteln in derselben Reihenfolge)
+// und ordnet sie den Titeln zu. Nur 1 bis 4 Wörter, höchstens 40 Zeichen.
+export function kurztitelAuswerten(titel, antwort) {
+  const text = String(antwort ?? '');
+  let liste;
+  try {
+    liste = JSON.parse(text.slice(text.indexOf('['), text.lastIndexOf(']') + 1));
+  } catch {
+    return {};
+  }
+  const ergebnis = {};
+  if (!Array.isArray(liste)) return ergebnis;
+  titel.forEach((t, i) => {
+    const kurz = typeof liste[i] === 'string' ? liste[i].trim() : '';
+    const woerter = kurz.split(/\s+/).filter(Boolean).length;
+    if (woerter >= 1 && woerter <= 4 && kurz.length <= 40) ergebnis[t] = kurz;
+  });
+  return ergebnis;
+}

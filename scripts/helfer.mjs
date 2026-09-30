@@ -48,7 +48,7 @@ const HOECHSTDAUER = 10 * 60 * 1000;
 const MODELL = process.env.HELFER_MODELL ?? 'claude-haiku-4-5-20251001';
 // Verhindert, dass ein Doppelklick kurz nach dem letzten Lauf gleich wieder
 // einen Aufruf auslöst.
-const SPERRFRIST = 10 * 60 * 1000;
+const SPERRFRIST = 60 * 1000;
 let letzterLauf = 0;
 
 // Nur die App selbst (und Tagesplan, lokal auf 5173) darf den Helfer ansprechen.
@@ -343,9 +343,9 @@ const server = createServer(async (req, res) => {
   }
   const seitLetztem = Date.now() - letzterLauf;
   if (seitLetztem < SPERRFRIST) {
-    const minuten = Math.ceil((SPERRFRIST - seitLetztem) / 60000);
+    const sekunden = Math.ceil((SPERRFRIST - seitLetztem) / 1000);
     antworte(res, 429, {
-      fehler: `Gerade erst aktualisiert. Bitte in etwa ${minuten} Minute${minuten === 1 ? '' : 'n'} erneut versuchen.`,
+      fehler: `Gerade erst aktualisiert. Bitte in etwa ${sekunden} Sekunden erneut versuchen.`,
     });
     return;
   }

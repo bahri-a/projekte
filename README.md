@@ -59,7 +59,7 @@ Die App hat zwei Reiter: **Meine Aufgaben** (selbst erstellt) und **Automatisch*
 
 Der Helfer formuliert außerdem für die App **Tagesplan** offene Aufgaben als kurze Hauptaufgaben mit 1 bis 4 Wörtern (`POST /kurztitel`, ein Haiku-Aufruf ohne Werkzeuge). Tagesplan liest die Aufgaben selbst aus dem Browser-Speicher, schickt nur Titel, die es noch nicht kennt, und merkt sich die Antwort. Hier in Projekte wird dabei nichts geändert.
 
-Nach einem Durchlauf ist „Aktualisieren“ 10 Minuten gesperrt, damit ein Doppelklick nicht gleich wieder einen Aufruf auslöst.
+Nach einem Durchlauf ist „Aktualisieren“ 60 Sekunden gesperrt, damit ein Doppelklick nicht gleich wieder einen Aufruf auslöst.
 
 Das geht nur auf dem MacBook, auf dem der Helfer läuft (`scripts/helfer.mjs`). Er ist nur auf diesem Mac erreichbar, nimmt nur Anfragen der App an und kann nichts anderes, als diese Suche zu starten.
 

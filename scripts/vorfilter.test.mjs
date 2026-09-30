@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { istNewsletter, istTreffer, kennung, mailtextKuerzen, stellenAusNotiz, verweiseAufloesen } from './vorfilter.mjs';
+import {
+  istNewsletter,
+  istTreffer,
+  kennung,
+  kurztitelAnfrage,
+  kurztitelAuswerten,
+  kurztitelEingabe,
+  mailtextKuerzen,
+  stellenAusNotiz,
+  verweiseAufloesen,
+} from './vorfilter.mjs';
 
 const heute = new Date(2026, 8, 29);
 
@@ -83,5 +93,27 @@ describe('verweiseAufloesen', () => {
 
   it('verwirft unbekannte Verweise', () => {
     expect(verweiseAufloesen([{ titel: 'c', quellId: 'abc@mail.de' }], verweise)).toEqual([]);
+  });
+});
+
+describe('Kurztitel für Tagesplan', () => {
+  it('prüft die Anfrage', () => {
+    expect(kurztitelAnfrage(null)).toBeNull();
+    expect(kurztitelAnfrage({ titel: 'x' })).toBeNull();
+    expect(kurztitelAnfrage({ titel: ['A', 'A', '  ', 3, 'B'] })).toEqual(['A', 'B']);
+    expect(kurztitelAnfrage({ titel: Array.from({ length: 50 }, (_, i) => `T${i}`) })).toHaveLength(40);
+  });
+
+  it('nummeriert die Eingabe und kürzt lange Titel', () => {
+    const eingabe = kurztitelEingabe(['Hausarbeit  abgeben', 'x'.repeat(300)]).split('\n');
+    expect(eingabe[0]).toBe('1. Hausarbeit abgeben');
+    expect(eingabe[1].length).toBeLessThan(210);
+  });
+
+  it('ordnet Claudes Antwort zu und verwirft zu lange Kurztitel', () => {
+    const titel = ['Die Hausarbeit fertig schreiben und abgeben', 'Mit dem Vermieter sprechen', 'Drittens'];
+    const antwort = 'Hier: ["Hausarbeit abgeben", "Mit dem Vermieter über die Heizung sprechen"]';
+    expect(kurztitelAuswerten(titel, antwort)).toEqual({ [titel[0]]: 'Hausarbeit abgeben' });
+    expect(kurztitelAuswerten(titel, 'kein JSON')).toEqual({});
   });
 });
